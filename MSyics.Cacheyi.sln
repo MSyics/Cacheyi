@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSyics.Cacheyi", "MSyics.Cacheyi\MSyics.Cacheyi.csproj", "{E1517565-934E-4F7C-BE8E-E9515D10C3E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MSyics.Cacheyi.NET", "MSyics.Cacheyi.NET\MSyics.Cacheyi.NET.csproj", "{19DBE1F5-0613-452F-9B10-2CDB58708080}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Cacheyi.NET", "Example.Cacheyi.NET\Example.Cacheyi.NET.csproj", "{E127DC54-3FC9-42D6-B75A-73C8233F5016}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E1517565-934E-4F7C-BE8E-E9515D10C3E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1517565-934E-4F7C-BE8E-E9515D10C3E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1517565-934E-4F7C-BE8E-E9515D10C3E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1517565-934E-4F7C-BE8E-E9515D10C3E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19DBE1F5-0613-452F-9B10-2CDB58708080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19DBE1F5-0613-452F-9B10-2CDB58708080}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19DBE1F5-0613-452F-9B10-2CDB58708080}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19DBE1F5-0613-452F-9B10-2CDB58708080}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E127DC54-3FC9-42D6-B75A-73C8233F5016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E127DC54-3FC9-42D6-B75A-73C8233F5016}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E127DC54-3FC9-42D6-B75A-73C8233F5016}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E127DC54-3FC9-42D6-B75A-73C8233F5016}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -70,4 +70,4 @@ static void Main(string[] args)
   + Xamarin.iOS
   + Xamarin.iOS(Classic)
 * MSyics.Cacheyi.NET
-  + .NET Framework 4.6.1
+  + .NET Framework 4.5

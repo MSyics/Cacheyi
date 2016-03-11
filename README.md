@@ -1,4 +1,4 @@
-# MSyics.Cacheyi
+# Cacheyi
 
 Cacheyi is a micro cache management library, by fluent API.
 
@@ -62,7 +62,7 @@ static void Main(string[] args)
 }
 ```
 ## Target
-* MSyics.Cacheyi.PCL
+* MSyics.Cacheyi
   + .NET Framework 4.5
   + ASP.NET Core 5.0
   + Windows Phone 8.1

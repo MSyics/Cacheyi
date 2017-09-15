@@ -1,12 +1,13 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
+using MSyics.Cacheyi.Configuration;
 using System;
 using System.Linq.Expressions;
 
-namespace MSyics.Cacheyi.Configuration
+namespace MSyics.Cacheyi
 {
     /// <summary>
     /// キャッシュの実装を構築するための機能を提供します。
@@ -17,7 +18,7 @@ namespace MSyics.Cacheyi.Configuration
 
         internal CacheStoreDirector(CacheContext context)
         {
-            this.m_context = context;
+            m_context = context;
         }
 
         /// <summary>
@@ -27,6 +28,6 @@ namespace MSyics.Cacheyi.Configuration
         /// <typeparam name="TValue">値</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
         public ICacheStoreConfiguration<TKey, TValue> Build<TKey, TValue>(Expression<Func<CacheStore<TKey, TValue>>> property) => 
-            new CacheStoreConfiguration<TKey, TValue>(this.m_context, ((MemberExpression)property.Body).Member.Name);
+            new CacheStoreConfiguration<TKey, TValue>(m_context, ((MemberExpression)property.Body).Member.Name);
     }
 }

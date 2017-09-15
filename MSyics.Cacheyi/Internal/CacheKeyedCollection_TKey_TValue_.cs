@@ -1,9 +1,10 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 
 namespace MSyics.Cacheyi
 {
@@ -12,18 +13,9 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKey">キー</typeparam>
     /// <typeparam name="TValue">キャッシュ</typeparam>
-    internal sealed class CacheKeyedCollection<TKey, TValue> : KeyedCollection<int, CacheProxy<TKey, TValue>>
+    internal sealed class CacheKeyedCollection<TKey, TValue> : KeyedCollection<TKey, CacheProxy<TKey, TValue>>
     {
         public CacheKeyedCollection() : base(null, 0) { }
-
-        protected override int GetKeyForItem(CacheProxy<TKey, TValue> item)
-        {
-            return item.CacheKey.UniqueKey;
-        }
-
-        protected override void RemoveItem(int index)
-        {
-            base.RemoveItem(index);
-        }
+        protected override TKey GetKeyForItem(CacheProxy<TKey, TValue> item) => item.CacheKey;
     }
 }

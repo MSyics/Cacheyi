@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -17,7 +17,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">キャッシュされるオブジェクトの型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
-        private object thisLock = new object();
+        private object m_thisLock = new object();
 
         internal CacheProxy()
         {
@@ -29,19 +29,19 @@ namespace MSyics.Cacheyi
         /// <returns>オブジェクト</returns>
         public TValue Get()
         {
-            lock (thisLock)
+            lock (m_thisLock)
             {
-                if (this.Status == CacheStatus.Virtual)
+                if (Status == CacheStatus.Virtual)
                 {
-                    this.CacheValue = this.ValueFactoryCallBack();
-                    this.Status = CacheStatus.Real;
+                    CacheValue = ValueFactoryCallBack();
+                    Status = CacheStatus.Real;
 
-                    if (this.HasTimeout)
+                    if (HasTimeout)
                     {
-                        this.CancellingTimeout = TimedOutCallBack.StartNewTimer(this.Timeout);
+                        CancellingTimeout = TimedOutCallBack.StartNewTimer(Timeout);
                     }
                 }
-                return this.CacheValue.Value;
+                return CacheValue.Value;
             }
         }
 
@@ -50,10 +50,10 @@ namespace MSyics.Cacheyi
         /// </summary>
         public CacheProxy<TKey, TValue> Reset()
         {
-            lock (thisLock)
+            lock (m_thisLock)
             {
-                this.Status = CacheStatus.Virtual;
-                this.CancellingTimeout?.TrySetCanceled();
+                Status = CacheStatus.Virtual;
+                CancellingTimeout?.TrySetCanceled();
                 return this;
             }
         }
@@ -70,9 +70,8 @@ namespace MSyics.Cacheyi
         {
             get
             {
-                if (this.Status != CacheStatus.Real) { return false; }
-
-                return this.HasTimeout ? DateTimeOffset.Now >= this.CacheValue.Created.Add(this.Timeout) : false;
+                if (Status != CacheStatus.Real) { return false; }
+                return HasTimeout ? DateTimeOffset.Now >= CacheValue.Created.Add(Timeout) : false;
             }
         }
 
@@ -84,14 +83,14 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// タイムアウトするかどうかを示す値を取得します。
         /// </summary>
-        public bool HasTimeout => this.Timeout != TimeSpan.Zero;
+        public bool HasTimeout => Timeout != TimeSpan.Zero;
 
         /// <summary>
         /// キャッシュオブジェクトのキーを取得します。
         /// </summary>
-        public TKey Key => this.CacheKey.AccessKey;
+        public TKey Key => CacheKey;
 
-        internal CacheKey<TKey> CacheKey { get; set; }
+        internal TKey CacheKey { get; set; }
         internal CacheValue<TValue> CacheValue { get; set; }
         internal Func<CacheValue<TValue>> ValueFactoryCallBack { get; set; }
         internal Func<bool> TimedOutCallBack { get; set; }

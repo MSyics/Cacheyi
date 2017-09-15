@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -19,35 +19,23 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
     public class CacheStore<TKey, TValue>
     {
-        internal CacheStore(string name)
-        {
-            this.Name = name;
-        }
+        internal CacheStore(string name) => Name = name;
 
         private void DataSourceChangeMonitor_OnChanged(object sender, DataSourceChangeEventArgs<TKey> e)
         {
             switch (e.ChangeAction)
             {
                 case CacheChangeAction.Reset:
-                    this.Reset();
-                    break;
-
-                case CacheChangeAction.ResetContains:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Reset(e.Keys);
-                    }
+                    Reset();
                     break;
 
                 case CacheChangeAction.Clear:
-                    this.Clear();
+                    Clear();
                     break;
 
+                case CacheChangeAction.ResetContains:
                 case CacheChangeAction.Remove:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Remove(e.Keys);
-                    }
+                    if (e.Keys != null || e.Keys.Count > 0) { Remove(e.Keys); }
                     break;
 
                 case CacheChangeAction.None:
@@ -56,13 +44,23 @@ namespace MSyics.Cacheyi
             }
         }
 
-        private CacheProxy<TKey, TValue> Alloc(CacheKey<TKey> key)
+        /// <summary>
+        /// 指定したキーでキャッシュにアクセスしてオブジェクトを取得します。
+        /// </summary>
+        /// <param name="key">キャッシュを区別するためのキー</param>
+        /// <returns>オブジェクト</returns>
+        public TValue Get(TKey key)
         {
-            if (m_caches.Contains(key.UniqueKey)) { return m_caches[key.UniqueKey]; }
+            return Alloc(key).Get();
+        }
+
+        private CacheProxy<TKey, TValue> AllocCore(TKey key)
+        {
+            if (m_caches.Contains(key)) { return m_caches[key]; }
 
             using (m_cacheLock.Scope(LockStatus.Write))
             {
-                if (this.HasMaxCapacity && m_caches.Count >= this.MaxCapacity)
+                if (HasMaxCapacity && m_caches.Count >= MaxCapacity)
                 {
                     // 最大容量を超えるときは、最初の要素を削除します。
                     m_caches.RemoveAt(0);
@@ -70,22 +68,16 @@ namespace MSyics.Cacheyi
 
                 var item = new CacheProxy<TKey, TValue>()
                 {
-                    Timeout = this.Timeout,
+                    Timeout = Timeout,
                     CacheKey = key,
-                    ValueFactoryCallBack = () =>
+                    ValueFactoryCallBack = () => new CacheValue<TValue>()
                     {
-                        return new CacheValue<TValue>()
-                        {
-                            Value = this.ValueBuilder.GetValue(key.AccessKey),
-                            Created = DateTimeOffset.Now,
-                        };
+                        Value = ValueBuilder.GetValue(key),
+                        Created = DateTimeOffset.Now,
                     },
                 };
 
-                if (this.HasTimeout)
-                {
-                    item.TimedOutCallBack = () => this.Remove(key.AccessKey);
-                }
+                if (HasTimeout) { item.TimedOutCallBack = () => Remove(key); }
 
                 m_caches.Add(item);
                 return item;
@@ -105,7 +97,7 @@ namespace MSyics.Cacheyi
 
             using (m_cacheLock.Scope(LockStatus.UpgradeableRead))
             {
-                return Alloc(this.KeyBuilder.GetCacheKey(key));
+                return AllocCore(key);
             }
         }
 
@@ -116,14 +108,11 @@ namespace MSyics.Cacheyi
         /// <returns>キャッシュを関連付けるオブジェクトの一覧</returns>
         public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys)
         {
-            if (keys == null)
-            {
-                yield break;
-            }
+            if (keys == null) { yield break; }
 
-            foreach (var item in keys)
+            foreach (var key in keys)
             {
-                yield return Alloc(item);
+                yield return AllocCore(key);
             }
         }
 
@@ -141,7 +130,7 @@ namespace MSyics.Cacheyi
             }
             else
             {
-                cache = Alloc(key);
+                cache = AllocCore(key);
             }
             return cache != null;
         }
@@ -165,10 +154,9 @@ namespace MSyics.Cacheyi
             {
                 foreach (var key in keys)
                 {
-                    var uniqueKey = this.KeyBuilder.GetCacheKey(key).UniqueKey;
-                    if (m_caches.Contains(uniqueKey))
+                    if (m_caches.Contains(key))
                     {
-                        m_caches[uniqueKey].Reset();
+                        m_caches[key].Reset();
                     }
                 };
             }
@@ -196,7 +184,7 @@ namespace MSyics.Cacheyi
             {
                 foreach (var key in keys)
                 {
-                    m_caches.Remove(this.KeyBuilder.GetCacheKey(key).UniqueKey);
+                    m_caches.Remove(key);
                 }
             }
         }
@@ -212,7 +200,7 @@ namespace MSyics.Cacheyi
 
             using (m_cacheLock.Scope(LockStatus.Write))
             {
-                return m_caches.Remove(this.KeyBuilder.GetCacheKey(key).UniqueKey);
+                return m_caches.Remove(key);
             }
         }
 
@@ -221,11 +209,9 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void StartMonitoring()
         {
-            if (this.CanMonitoring)
-            {
-                this.ChangeMonitor.OnChanged += new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_OnChanged);
-                this.ChangeMonitor.Start();
-            }
+            if (!CanMonitoring) { return; }
+            ChangeMonitor.OnChanged += new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_OnChanged);
+            ChangeMonitor.Start();
         }
 
         /// <summary>
@@ -233,11 +219,9 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void StopMonitoring()
         {
-            if (this.CanMonitoring)
-            {
-                this.ChangeMonitor.OnChanged -= new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_OnChanged);
-                this.ChangeMonitor.Stop();
-            }
+            if (!CanMonitoring) { return; }
+            ChangeMonitor.OnChanged -= new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_OnChanged);
+            ChangeMonitor.Stop();
         }
 
         /// <summary>
@@ -258,7 +242,6 @@ namespace MSyics.Cacheyi
         }
 
         internal string Name { get; private set; }
-        internal ICacheKeyBuilder<TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKey, TValue> ValueBuilder { get; set; }
 
         /// <summary>
@@ -269,22 +252,22 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// キャッシュしているオブジェクト数を取得します。
         /// </summary>
-        public int Count => this.m_caches.Count;
+        public int Count => m_caches.Count;
 
         /// <summary>
         /// データソースの変更通知を受け取ることができるかどうかを示す値を取得します。
         /// </summary>
-        public bool CanMonitoring => this.ChangeMonitor != null;
+        public bool CanMonitoring => ChangeMonitor != null;
 
         /// <summary>
         /// 最大容量が設定されているかどうかを示す値を取得します。
         /// </summary>
-        public bool HasMaxCapacity => this.MaxCapacity > 0;
+        public bool HasMaxCapacity => MaxCapacity > 0;
 
         /// <summary>
         /// キャッシュオブジェクトの保持期間が設定されているかどうかを示す値を取得します。
         /// </summary>
-        public bool HasTimeout => this.Timeout != TimeSpan.Zero;
+        public bool HasTimeout => Timeout != TimeSpan.Zero;
 
         /// <summary>
         /// キャッシュオブジェクトの保持期間を取得します。
@@ -304,12 +287,8 @@ namespace MSyics.Cacheyi
         /// </summary>
         ~CacheStore()
         {
-            if (CanMonitoring)
-            {
-                StopMonitoring();
-            }
-
-            this.m_cacheLock.Dispose();
+            if (CanMonitoring) { StopMonitoring(); }
+            m_cacheLock.Dispose();
         }
     }
 }

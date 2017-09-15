@@ -19,7 +19,6 @@ public class HogeCacheCenter : CacheCenter
                     x.Timeout = TimeSpan.FromSeconds(3);
                     x.MaxCapacity = 10;
                 })
-                .MakeUniqueKey(x => x.GetHashCode())
                 .MakeValue(x =>
                 {
                     return ++i;
@@ -61,13 +60,3 @@ static void Main(string[] args)
     }
 }
 ```
-## Target
-* MSyics.Cacheyi
-  + .NET Framework 4.5
-  + ASP.NET Core 5.0
-  + Windows Phone 8.1
-  + Xamarin.Android
-  + Xamarin.iOS
-  + Xamarin.iOS(Classic)
-* MSyics.Cacheyi.NET
-  + .NET Framework 4.5

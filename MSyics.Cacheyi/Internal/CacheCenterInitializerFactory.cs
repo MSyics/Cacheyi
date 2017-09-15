@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -19,12 +19,8 @@ namespace MSyics.Cacheyi
         public Action<CacheCenter> Create(CacheCenter center)
         {
             m_paraCenter = Expression.Parameter(center.GetType(), "center");
-
-            var body = Expression.Block(
-                new[] { m_paraCenter },
-                GetExpressions(center));
+            var body = Expression.Block(new[] { m_paraCenter }, GetExpressions(center));
             var lamda = Expression.Lambda<Action<CacheCenter>>(body, m_paraX);
-
             return lamda.Compile();
         }
 
@@ -32,16 +28,12 @@ namespace MSyics.Cacheyi
         {
             // $center = $x
             yield return Expression.Assign(m_paraCenter, Expression.Convert(m_paraX, center.Context.CenterType));
-
             // $center.[store] = (StoreType)object;
             var properties = center.Context
                                    .CenterType
                                    .GetTypeInfo()
                                    .DeclaredProperties
-                                   //.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                                   //.Where(x => x.PropertyType.IsGenericType 
-                                   //         && x.PropertyType.GetGenericTypeDefinition() == typeof(CacheStore<,>));
-                                   .Where(x => x.PropertyType.GetGenericTypeDefinition() == typeof(CacheStore<,>));
+                                   .Where(x => x.PropertyType.GetGenericTypeDefinition().Equals(typeof(CacheStore<,>)));
             foreach (var item in properties)
             {
                 yield return

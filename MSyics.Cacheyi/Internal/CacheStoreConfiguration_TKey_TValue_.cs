@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -12,7 +12,7 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, IUniqueKeyConfiguration<TKey, TValue>, IValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, IValueConfiguration<TKey, TValue>
     {
         private CacheContext m_context;
         private CacheStore<TKey, TValue> m_store;
@@ -20,9 +20,9 @@ namespace MSyics.Cacheyi
 
         public CacheStoreConfiguration(CacheContext context, string storeName)
         {
-            this.m_context = context;
-            this.m_storeName = storeName;
-            this.m_store = this.m_context.StoreInstanceNamedMapping.Add<TKey, TValue>(this.m_context.CenterType.FullName, this.m_storeName);
+            m_context = context;
+            m_storeName = storeName;
+            m_store = m_context.StoreInstanceNamedMapping.Add<TKey, TValue>(m_context.CenterType.FullName, m_storeName);
         }
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
@@ -33,8 +33,8 @@ namespace MSyics.Cacheyi
 
             var setting = new CacheStoreSettings()
             {
-                CenterType = this.m_context.CenterType,
-                StoreName = this.m_storeName,
+                CenterType = m_context.CenterType,
+                StoreName = m_storeName,
                 MaxCapacity = 0,
                 Timeout = TimeSpan.Zero,
             };
@@ -52,33 +52,13 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IUniqueKeyConfiguration<TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
+        public IValueConfiguration<TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
         {
             #region Doer
             if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
             #endregion
 
             m_store.ChangeMonitor = monitor;
-            return this;
-        }
-
-        public IValueConfiguration<TKey, TValue> MakeUniqueKey(ICacheKeyBuilder<TKey> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            m_store.KeyBuilder = builder;
-            return this;
-        }
-
-        public IValueConfiguration<TKey, TValue> MakeUniqueKey(Func<TKey, int> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKey>() { Builder = builder });
             return this;
         }
 

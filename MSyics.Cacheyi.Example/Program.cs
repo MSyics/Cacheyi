@@ -13,6 +13,9 @@ namespace MSyics.Cacheyi.Example
 
         static void Main(string[] args)
         {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
+            File.WriteAllLines(path, Enumerable.Range(1, 100).Select(i => i.ToString()));
+
             Example1();
 
             //var tasks = Enumerable.Range(1, 100).Select(i => Task.Factory.StartNew(() =>
@@ -22,8 +25,7 @@ namespace MSyics.Cacheyi.Example
             //}));
             //Task.WaitAll(tasks.ToArray());
 
-            //var path = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
-            //File.WriteAllLines(path, Enumerable.Range(1, 10000000).Select(i => i.ToString()));
+            
         }
 
         private static void Example1()

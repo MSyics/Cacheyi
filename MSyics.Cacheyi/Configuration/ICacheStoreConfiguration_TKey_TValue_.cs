@@ -18,4 +18,16 @@ namespace MSyics.Cacheyi.Configuration
         /// <param name="action">設定オブジェクト</param>
         IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action);
     }
+
+    /// <summary>
+    /// CacheStore についての設定を行います。
+    /// </summary>
+    public interface ICacheStoreConfiguration<TUnique, TKey, TValue> : IMonitoringConfiguration<TUnique, TKey, TValue>
+    {
+        /// <summary>
+        /// CacheStore オブジェクトの設定を行います。
+        /// </summary>
+        /// <param name="action">設定オブジェクト</param>
+        IMonitoringConfiguration<TUnique, TKey, TValue> Settings(Action<ICacheStoreSettings> action);
+    }
 }

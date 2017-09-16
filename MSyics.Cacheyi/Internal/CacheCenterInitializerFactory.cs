@@ -33,7 +33,11 @@ namespace MSyics.Cacheyi
                                    .CenterType
                                    .GetTypeInfo()
                                    .DeclaredProperties
-                                   .Where(x => x.PropertyType.GetGenericTypeDefinition().Equals(typeof(CacheStore<,>)));
+                                   .Where(x =>
+                                   {
+                                       var type = x.PropertyType.GetGenericTypeDefinition();
+                                       return type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
+                                   });
             foreach (var item in properties)
             {
                 yield return

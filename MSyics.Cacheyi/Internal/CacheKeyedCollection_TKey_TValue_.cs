@@ -27,10 +27,6 @@ namespace MSyics.Cacheyi
     internal sealed class CacheKeyedCollection<TUnique, TKey, TValue> : KeyedCollection<TUnique, CacheProxy<TUnique, TKey, TValue>>
     {
         public CacheKeyedCollection() : base(null, 0) { }
-
-        protected override TUnique GetKeyForItem(CacheProxy<TUnique, TKey, TValue> item)
-        {
-            return item.CacheKey.UniqueKey;
-        }
+        protected override TUnique GetKeyForItem(CacheProxy<TUnique, TKey, TValue> item) => item.CacheKey.UniqueKey;
     }
 }

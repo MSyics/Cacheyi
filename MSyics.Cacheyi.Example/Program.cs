@@ -26,13 +26,24 @@ namespace MSyics.Cacheyi.Example
                 Message = Guid.NewGuid().ToString(),
             };
 
-            var tasks = Enumerable.Range(1, 100).Select(i => Task.Factory.StartNew(() =>
             {
-                var cache = Cache.MyData2.Alloc(key);
-                var value = cache.Get();
-                Console.WriteLine(value);
-            }));
-            Task.WaitAll(tasks.ToArray());
+                var tasks = Enumerable.Range(1, 10).Select(i => Task.Factory.StartNew(() =>
+                {
+                    var cache = Cache.MyData2.Alloc(key);
+                    var value = cache.Get();
+                    Console.WriteLine(value);
+                }));
+                Task.WaitAll(tasks.ToArray());
+            }
+            {
+                var tasks = Enumerable.Range(1, 100).Select(i => Task.Factory.StartNew(() =>
+                {
+                    var cache = Cache.MyData.Alloc(1);
+                    var value = cache.Get();
+                    Console.WriteLine(value);
+                }));
+                Task.WaitAll(tasks.ToArray());
+            }
         }
 
         private static void Example1()
@@ -100,9 +111,9 @@ namespace MSyics.Cacheyi.Example
         {
             director.Build(() => MyData).Settings(s =>
                     {
-                        
+
                         s.MaxCapacity = 0;
-                        s.Timeout = TimeSpan.FromSeconds(2);
+                        s.Timeout = TimeSpan.FromMilliseconds(1);
                     })
                     .MakeValue(key =>
                     {
@@ -119,7 +130,7 @@ namespace MSyics.Cacheyi.Example
             director.Build(() => MyData2).Settings(s =>
             {
                 s.MaxCapacity = 0;
-                s.Timeout = TimeSpan.FromMilliseconds(2);
+                s.Timeout = TimeSpan.FromTicks(2);
             })
             .MakeUniqueKey(x =>
             {

@@ -9,10 +9,11 @@
     <PackageTags>cache</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/MSyics/Cacheyi/blob/master/LICENSE</PackageLicenseUrl>
-    <Description>Cacheyi is a micro cache management library</Description>
+    <Description>Cacheyi is a micro cache management library.</Description>
     <Copyright>Copyright (c) 2017 MSyics</Copyright>
     <Company></Company>
     <Authors>MSyics</Authors>
+    <PackageId>Cacheyi</PackageId>
   </PropertyGroup>
 
 </Project>

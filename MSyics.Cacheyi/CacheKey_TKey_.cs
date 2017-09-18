@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2016 MSyics
+© 2017 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -8,7 +8,7 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// キャッシュするときに使用するキーを表現します。
     /// </summary>
-    internal sealed class CacheKey<TUnique, TKey>
+    public sealed class CacheKey<TUnique, TKey>
     {
         /// <summary>
         /// CacheKey&lt;TKey&gt; クラスの新しいインスタンスを初期化します。

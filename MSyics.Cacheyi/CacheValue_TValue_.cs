@@ -12,9 +12,7 @@ namespace MSyics.Cacheyi
     /// </summary>
     public sealed class CacheValue<TValue>
     {
-        internal CacheValue()
-        {
-        }
+        internal CacheValue() { }
 
         /// <summary>
         /// キャッシュしたオブジェクトを取得します。

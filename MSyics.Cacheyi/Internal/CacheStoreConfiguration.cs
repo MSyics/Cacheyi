@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -85,20 +85,20 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TUnique, TKey, TValue> : ICacheStoreConfiguration<TUnique, TKey, TValue>, IMonitoringConfiguration<TUnique, TKey, TValue>, IUniqueKeyConfiguration<TUnique, TKey, TValue>, IValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKey, TKeyed, TValue> : ICacheStoreConfiguration<TKey, TKeyed, TValue>, IMonitoringConfiguration<TKey, TKeyed, TValue>, IKeyConfiguration<TKey, TKeyed, TValue>, IValueConfiguration<TKeyed, TValue>
     {
         private CacheContext Context { get; set; }
-        private CacheStore<TUnique, TKey, TValue> Store { get; set; }
+        private CacheStore<TKey, TKeyed, TValue> Store { get; set; }
         private string StoreName { get; set; }
 
         public CacheStoreConfiguration(CacheContext context, string storeName)
         {
             Context = context;
             StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TUnique, TKey, TValue>(Context.CenterType.FullName, StoreName);
+            Store = Context.StoreInstanceNamedMapping.Add<TKey, TKeyed, TValue>(Context.CenterType.FullName, StoreName);
         }
 
-        public IMonitoringConfiguration<TUnique, TKey, TValue> Settings(Action<ICacheStoreSettings> action)
+        public IMonitoringConfiguration<TKey, TKeyed, TValue> Settings(Action<ICacheStoreSettings> action)
         {
             #region Doer
             if (action == null) { throw new ArgumentNullException(nameof(action)); }
@@ -125,7 +125,7 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IUniqueKeyConfiguration<TUnique, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
+        public IKeyConfiguration<TKey, TKeyed, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor)
         {
             #region Doer
             if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
@@ -135,7 +135,7 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IValueConfiguration<TKey, TValue> MakeUniqueKey(ICacheKeyBuilder<TUnique, TKey> builder)
+        public IValueConfiguration<TKeyed, TValue> MakeUniqueKey(ICacheKeyBuilder<TKey, TKeyed> builder)
         {
             #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
@@ -145,17 +145,17 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IValueConfiguration<TKey, TValue> MakeUniqueKey(Func<TKey, TUnique> builder)
+        public IValueConfiguration<TKeyed, TValue> MakeKey(Func<TKeyed, TKey> builder)
         {
             #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             #endregion
 
-            this.MakeUniqueKey(new FuncCacheKeyBuilder<TUnique, TKey>() { Builder = builder });
+            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKey, TKeyed>() { Builder = builder });
             return this;
         }
 
-        public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
+        public void MakeValue(ICacheValueBuilder<TKeyed, TValue> builder)
         {
             #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
@@ -164,13 +164,13 @@ namespace MSyics.Cacheyi
             Store.ValueBuilder = builder;
         }
 
-        public void MakeValue(Func<TKey, TValue> builder)
+        public void MakeValue(Func<TKeyed, TValue> builder)
         {
             #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             #endregion
 
-            MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
+            MakeValue(new FuncCacheValueBuilder<TKeyed, TValue>() { Builder = builder });
         }
 
 

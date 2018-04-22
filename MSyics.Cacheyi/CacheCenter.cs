@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -19,7 +19,7 @@ namespace MSyics.Cacheyi
         {
             Context = new CacheContext() { CenterType = GetType(), };
 
-            var initializer = new CacheContext().CenterInitializerTypedMapping.GetOrAdd(Context.CenterType, key =>
+            var initializer = new CacheContext().CenterInitializerTypedMapping.GetOrAdd(Context.CenterType, _ =>
             {
                 ConstructStore(new CacheStoreDirector(Context));
                 return new CacheCenterInitializerFactory().Create(this);

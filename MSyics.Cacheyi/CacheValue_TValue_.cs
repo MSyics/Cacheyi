@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -22,6 +22,6 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// キャッシュした時刻を取得します。
         /// </summary>
-        public DateTimeOffset Created { get; internal set; }
+        public DateTimeOffset Cached { get; internal set; }
     }
 }

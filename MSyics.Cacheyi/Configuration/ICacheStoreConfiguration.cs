@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -8,7 +8,7 @@ using System;
 namespace MSyics.Cacheyi.Configuration
 {
     /// <summary>
-    /// CacheStore についての設定を行います。
+    /// CacheStore の設定を行います。
     /// </summary>
     public interface ICacheStoreConfiguration<TKey, TValue> : IMonitoringConfiguration<TKey, TValue>
     {
@@ -20,14 +20,14 @@ namespace MSyics.Cacheyi.Configuration
     }
 
     /// <summary>
-    /// CacheStore についての設定を行います。
+    /// CacheStore の設定を行います。
     /// </summary>
-    public interface ICacheStoreConfiguration<TUnique, TKey, TValue> : IMonitoringConfiguration<TUnique, TKey, TValue>
+    public interface ICacheStoreConfiguration<TKey, TValue> : IMonitoringConfiguration<TKey, TKeyed, TValue>
     {
         /// <summary>
         /// CacheStore オブジェクトの設定を行います。
         /// </summary>
         /// <param name="action">設定オブジェクト</param>
-        IMonitoringConfiguration<TUnique, TKey, TValue> Settings(Action<ICacheStoreSettings> action);
+        IMonitoringConfiguration<TKey, TKeyed, TValue> Settings(Action<ICacheStoreSettings> action);
     }
 }

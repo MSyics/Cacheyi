@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -13,21 +13,21 @@ namespace MSyics.Cacheyi
 {
     internal class CacheCenterInitializerFactory
     {
-        private ParameterExpression m_paraX = Expression.Parameter(typeof(CacheCenter), "x");
-        private ParameterExpression m_paraCenter;
+        private ParameterExpression ParaX = Expression.Parameter(typeof(CacheCenter), "x");
+        private ParameterExpression ParaCenter;
 
         public Action<CacheCenter> Create(CacheCenter center)
         {
-            m_paraCenter = Expression.Parameter(center.GetType(), "center");
-            var body = Expression.Block(new[] { m_paraCenter }, GetExpressions(center));
-            var lamda = Expression.Lambda<Action<CacheCenter>>(body, m_paraX);
+            ParaCenter = Expression.Parameter(center.GetType(), "center");
+            var body = Expression.Block(new[] { ParaCenter }, GetExpressions(center));
+            var lamda = Expression.Lambda<Action<CacheCenter>>(body, ParaX);
             return lamda.Compile();
         }
 
         private IEnumerable<Expression> GetExpressions(CacheCenter center)
         {
             // $center = $x
-            yield return Expression.Assign(m_paraCenter, Expression.Convert(m_paraX, center.Context.CenterType));
+            yield return Expression.Assign(ParaCenter, Expression.Convert(ParaX, center.Context.CenterType));
             // $center.[store] = (StoreType)object;
             var properties = center.Context
                                    .CenterType
@@ -42,7 +42,7 @@ namespace MSyics.Cacheyi
             {
                 yield return
                     Expression.Assign(
-                        Expression.Property(m_paraCenter, item),
+                        Expression.Property(ParaCenter, item),
                         Expression.Convert(
                             Expression.Constant(
                                 center.Context.StoreInstanceNamedMapping.Get(center.Context.CenterType.FullName, item.Name),

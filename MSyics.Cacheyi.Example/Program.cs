@@ -13,6 +13,12 @@ namespace MSyics.Cacheyi.Example
 
         static void Main(string[] args)
         {
+            var c = new Class1();
+            c.Test();
+
+            return;
+
+
             var path = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
             File.WriteAllLines(path, Enumerable.Range(1, 100).Select(i => i.ToString()));
 
@@ -132,7 +138,7 @@ namespace MSyics.Cacheyi.Example
                 s.MaxCapacity = 0;
                 s.Timeout = TimeSpan.FromTicks(2);
             })
-            .MakeUniqueKey(x =>
+            .MakeKey(x =>
             {
                 return x.Id;
             })

@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -22,12 +22,12 @@ namespace MSyics.Cacheyi.Configuration
     /// <summary>
     /// データソース監視の設定を行います。
     /// </summary>
-    public interface IMonitoringConfiguration<TUnique, TKey, TValue> : IUniqueKeyConfiguration<TUnique, TKey, TValue>
+    public interface IMonitoringConfiguration<TKey, TKeyed, TValue> : IKeyConfiguration<TKey, TKeyed, TValue>
     {
         /// <summary>
         /// データソースの変更通知を実装するオブジェクトを登録します。
         /// </summary>
         /// <param name="monitor">変更通知を実装するオブジェクト</param>
-        IUniqueKeyConfiguration<TUnique, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor);
+        IKeyConfiguration<TKey, TKeyed, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor);
     }
 }

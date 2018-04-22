@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -17,7 +17,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">キャッシュされるオブジェクトの型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
-        private object m_thisLock = new object();
+        private object LockObj = new object();
 
         internal CacheProxy() { }
 
@@ -27,7 +27,7 @@ namespace MSyics.Cacheyi
         /// <returns>オブジェクト</returns>
         public TValue Get()
         {
-            lock (m_thisLock)
+            lock (LockObj)
             {
                 if (Status == CacheStatus.Virtual)
                 {
@@ -48,7 +48,7 @@ namespace MSyics.Cacheyi
         /// </summary>
         public CacheProxy<TKey, TValue> Reset()
         {
-            lock (m_thisLock)
+            lock (LockObj)
             {
                 Status = CacheStatus.Virtual;
                 CancellingTimeout?.TrySetCanceled();
@@ -69,7 +69,7 @@ namespace MSyics.Cacheyi
             get
             {
                 if (Status != CacheStatus.Real) { return false; }
-                return HasTimeout ? DateTimeOffset.Now >= CacheValue.Created.Add(Timeout) : false;
+                return HasTimeout ? DateTimeOffset.Now >= CacheValue.Cached.Add(Timeout) : false;
             }
         }
 
@@ -86,9 +86,8 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// キャッシュオブジェクトのキーを取得します。
         /// </summary>
-        public TKey Key => CacheKey;
+        public TKey Key { get; internal set; }
 
-        internal TKey CacheKey { get; set; }
         internal CacheValue<TValue> CacheValue { get; set; }
         internal Func<CacheValue<TValue>> ValueFactoryCallBack { get; set; }
         internal Func<bool> TimedOutCallBack { get; set; }

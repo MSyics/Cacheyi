@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -11,40 +11,31 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// キャッシュ関連オブジェクトおよびオブジェクトを区別するキーを派生します。
     /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    internal interface ICacheKeyBuilder<TUnique, TKey>
+    /// <typeparam name="TKeyed"></typeparam>
+    internal interface ICacheKeyBuilder<TKey, TKeyed>
     {
         /// <summary>
         /// キャッシュのキーを取得します。
         /// </summary>
-        /// <param name="key">オブジェクトを区別するキー</param>
-        CacheKey<TUnique, TKey> GetCacheKey(TKey key);
+        /// <param name="keyed">オブジェクトを区別するキー</param>
+        TKey GetKey(TKeyed keyed);
     }
 
     /// <summary>
     /// デリゲートで CacheKey ビルダー を構築できるようにします。
     /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    internal sealed class FuncCacheKeyBuilder<TUnique, TKey> : ICacheKeyBuilder<TUnique, TKey>
+    /// <typeparam name="TKeyed"></typeparam>
+    internal sealed class FuncCacheKeyBuilder<TKey, TKeyed> : ICacheKeyBuilder<TKey, TKeyed>
     {
-        public Func<TKey, TUnique> Builder { get; set; }
+        public Func<TKeyed, TKey> Builder { get; set; }
 
-        public CacheKey<TUnique, TKey> GetCacheKey(TKey key)
+        public TKey GetKey(TKeyed keyed)
         {
             #region Doer
-            if (key == null) { throw new ArgumentNullException(nameof(key)); }
+            if (keyed == null) { throw new ArgumentNullException(nameof(keyed)); }
             #endregion
 
-            return new CacheKey<TUnique, TKey>(BuidUniqueKey(key), key);
-        }
-
-        private TUnique BuidUniqueKey(TKey key)
-        {
-            #region Doer
-            if (key == null) { throw new ArgumentNullException(nameof(key)); }
-            #endregion
-
-            return Builder(key);
+            return Builder(keyed);
         }
     }
 }

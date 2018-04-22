@@ -1,5 +1,5 @@
 ﻿/****************************************************************
-© 2017 MSyics
+© 2018 MSyics
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
@@ -16,7 +16,7 @@ namespace MSyics.Cacheyi.Monitors
         /// <summary>
         /// データソースに変更があったときに発生します。
         /// </summary>
-        event EventHandler<DataSourceChangeEventArgs<TKey>> OnChanged;
+        event EventHandler<DataSourceChangeEventArgs<TKey>> Changed;
 
         /// <summary>
         /// データソースの監視を開始します。

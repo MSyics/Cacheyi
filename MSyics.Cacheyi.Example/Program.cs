@@ -111,7 +111,7 @@ namespace MSyics.Cacheyi.Example
     public class MyCacheCenter : CacheCenter
     {
         public CacheStore<int, MyData> MyData { get; set; }
-        public CacheStore<int, MyData, MyData> MyData2 { get; set; }
+        public CacheStore<MyData, int, MyData> MyData2 { get; set; }
 
         protected override void ConstructStore(CacheStoreDirector director)
         {

@@ -36,7 +36,7 @@ namespace MSyics.Cacheyi
         /// <typeparam name="TKeyed">キー</typeparam>
         /// <typeparam name="TValue">値</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
-        public ICacheStoreConfiguration<TKey, TKeyed, TValue> Build<TKey, TKeyed, TValue>(Expression<Func<CacheStore<TKey, TKeyed, TValue>>> property) =>
-            new CacheStoreConfiguration<TKey, TKeyed, TValue>(Context, ((MemberExpression)property.Body).Member.Name);
+        public ICacheStoreConfiguration<TKeyed, TKey, TValue> Build<TKeyed, TKey, TValue>(Expression<Func<CacheStore<TKeyed, TKey, TValue>>> property) =>
+            new CacheStoreConfiguration<TKeyed, TKey, TValue>(Context, ((MemberExpression)property.Body).Member.Name);
     }
 }

@@ -12,7 +12,7 @@ namespace MSyics.Cacheyi
     /// キャッシュ関連オブジェクトおよびオブジェクトを区別するキーを派生します。
     /// </summary>
     /// <typeparam name="TKeyed"></typeparam>
-    internal interface ICacheKeyBuilder<TKey, TKeyed>
+    internal interface ICacheKeyBuilder<TKeyed, TKey>
     {
         /// <summary>
         /// キャッシュのキーを取得します。
@@ -25,7 +25,7 @@ namespace MSyics.Cacheyi
     /// デリゲートで CacheKey ビルダー を構築できるようにします。
     /// </summary>
     /// <typeparam name="TKeyed"></typeparam>
-    internal sealed class FuncCacheKeyBuilder<TKey, TKeyed> : ICacheKeyBuilder<TKey, TKeyed>
+    internal sealed class FuncCacheKeyBuilder<TKeyed, TKey> : ICacheKeyBuilder<TKeyed, TKey>
     {
         public Func<TKeyed, TKey> Builder { get; set; }
 

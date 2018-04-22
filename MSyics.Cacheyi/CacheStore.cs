@@ -17,7 +17,7 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKeyed">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
     /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKey, TKeyed, TValue>
+    public class CacheStore<TKeyed, TKey, TValue>
     {
         internal CacheStore(string name)
         {
@@ -246,7 +246,7 @@ namespace MSyics.Cacheyi
         }
 
         internal string Name { get; private set; }
-        internal ICacheKeyBuilder<TKey, TKeyed> KeyBuilder { get; set; }
+        internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKeyed, TValue> ValueBuilder { get; set; }
 
         /// <summary>

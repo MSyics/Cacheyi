@@ -10,7 +10,7 @@ namespace MSyics.Cacheyi.Configuration
     /// <summary>
     /// キーについての設定を行います。
     /// </summary>
-    public interface IKeyConfiguration<TKey, TKeyed, TValue>
+    public interface IKeyConfiguration<TKeyed, TKey, TValue>
     {
         /// <summary>
         /// キャッシュ関連オブジェクトを区別するキーを派生するオブジェクトを登録します。

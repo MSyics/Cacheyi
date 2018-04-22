@@ -22,12 +22,12 @@ namespace MSyics.Cacheyi.Configuration
     /// <summary>
     /// データソース監視の設定を行います。
     /// </summary>
-    public interface IMonitoringConfiguration<TKey, TKeyed, TValue> : IKeyConfiguration<TKey, TKeyed, TValue>
+    public interface IMonitoringConfiguration<TKeyed, TKey, TValue> : IKeyConfiguration<TKeyed, TKey, TValue>
     {
         /// <summary>
         /// データソースの変更通知を実装するオブジェクトを登録します。
         /// </summary>
         /// <param name="monitor">変更通知を実装するオブジェクト</param>
-        IKeyConfiguration<TKey, TKeyed, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor);
+        IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor);
     }
 }

@@ -85,20 +85,20 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TKey, TKeyed, TValue> : ICacheStoreConfiguration<TKey, TKeyed, TValue>, IMonitoringConfiguration<TKey, TKeyed, TValue>, IKeyConfiguration<TKey, TKeyed, TValue>, IValueConfiguration<TKeyed, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, IKeyConfiguration<TKeyed, TKey, TValue>, IValueConfiguration<TKeyed, TValue>
     {
         private CacheContext Context { get; set; }
-        private CacheStore<TKey, TKeyed, TValue> Store { get; set; }
+        private CacheStore<TKeyed, TKey, TValue> Store { get; set; }
         private string StoreName { get; set; }
 
         public CacheStoreConfiguration(CacheContext context, string storeName)
         {
             Context = context;
             StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TKey, TKeyed, TValue>(Context.CenterType.FullName, StoreName);
+            Store = Context.StoreInstanceNamedMapping.Add<TKeyed, TKey, TValue>(Context.CenterType.FullName, StoreName);
         }
 
-        public IMonitoringConfiguration<TKey, TKeyed, TValue> Settings(Action<ICacheStoreSettings> action)
+        public IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action)
         {
             #region Doer
             if (action == null) { throw new ArgumentNullException(nameof(action)); }
@@ -125,7 +125,7 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IKeyConfiguration<TKey, TKeyed, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor)
+        public IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor)
         {
             #region Doer
             if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
@@ -135,7 +135,7 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IValueConfiguration<TKeyed, TValue> MakeUniqueKey(ICacheKeyBuilder<TKey, TKeyed> builder)
+        public IValueConfiguration<TKeyed, TValue> MakeUniqueKey(ICacheKeyBuilder<TKeyed, TKey> builder)
         {
             #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
@@ -151,7 +151,7 @@ namespace MSyics.Cacheyi
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             #endregion
 
-            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKey, TKeyed>() { Builder = builder });
+            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder });
             return this;
         }
 

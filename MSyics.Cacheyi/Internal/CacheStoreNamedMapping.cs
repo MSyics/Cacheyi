@@ -18,10 +18,10 @@ namespace MSyics.Cacheyi
             return (CacheStore<TKey, TValue>)Map.GetOrAdd(name, new CacheStore<TKey, TValue>(name));
         }
 
-        public CacheStore<TUnique, TKey, TValue> Add<TUnique, TKey, TValue>(string centerName, string storeName)
+        public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string centerName, string storeName)
         {
             var name = CreateKey(centerName, storeName);
-            return (CacheStore<TUnique, TKey, TValue>)Map.GetOrAdd(name, new CacheStore<TUnique, TKey, TValue>(name));
+            return (CacheStore<TKeyed, TKey, TValue>)Map.GetOrAdd(name, new CacheStore<TKeyed, TKey, TValue>(name));
         }
 
         public object Get(string centerName, string storeName)

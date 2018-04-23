@@ -28,9 +28,7 @@ namespace MSyics.Cacheyi
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
         {
-            #region Doer
             if (action == null) { throw new ArgumentNullException(nameof(action)); }
-            #endregion
 
             var setting = new CacheStoreSettings()
             {
@@ -55,29 +53,18 @@ namespace MSyics.Cacheyi
 
         public IValueConfiguration<TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
         {
-            #region Doer
-            if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
-            #endregion
-
-            Store.ChangeMonitor = monitor;
+            Store.ChangeMonitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             return this;
         }
 
         public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
         {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.ValueBuilder = builder;
+            Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
         public void MakeValue(Func<TKey, TValue> builder)
         {
-            #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
             MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
         }
     }
@@ -100,9 +87,7 @@ namespace MSyics.Cacheyi
 
         public IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action)
         {
-            #region Doer
             if (action == null) { throw new ArgumentNullException(nameof(action)); }
-            #endregion
 
             var setting = new CacheStoreSettings()
             {
@@ -125,54 +110,28 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor)
+        public IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
         {
-            #region Doer
-            if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
-            #endregion
-
-            Store.ChangeMonitor = monitor;
-            return this;
-        }
-
-        public IValueConfiguration<TKeyed, TValue> MakeUniqueKey(ICacheKeyBuilder<TKeyed, TKey> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.KeyBuilder = builder;
+            Store.ChangeMonitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             return this;
         }
 
         public IValueConfiguration<TKeyed, TValue> MakeKey(Func<TKeyed, TKey> builder)
         {
-            #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder });
+            Store.KeyBuilder = new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder };
             return this;
         }
 
         public void MakeValue(ICacheValueBuilder<TKeyed, TValue> builder)
         {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.ValueBuilder = builder;
+            Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
         public void MakeValue(Func<TKeyed, TValue> builder)
         {
-            #region Doer
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
             MakeValue(new FuncCacheValueBuilder<TKeyed, TValue>() { Builder = builder });
         }
-
-
     }
 }

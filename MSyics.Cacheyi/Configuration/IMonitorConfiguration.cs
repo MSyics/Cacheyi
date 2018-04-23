@@ -28,6 +28,6 @@ namespace MSyics.Cacheyi.Configuration
         /// データソースの変更通知を実装するオブジェクトを登録します。
         /// </summary>
         /// <param name="monitor">変更通知を実装するオブジェクト</param>
-        IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor);
+        IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor);
     }
 }

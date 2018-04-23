@@ -12,87 +12,44 @@ using System.Threading;
 
 namespace MSyics.Cacheyi
 {
+    interface ICacheStore<TKeyed, TKey, TValue>
+    {
+        bool CanMonitoring { get; }
+        bool HasMaxCapacity { get; }
+        bool HasTimeout { get; }
+        int Count { get; }
+        int MaxCapacity { get; }
+        TimeSpan Timeout { get; }
+        IDataSourceChangeMonitor<TKey> ChangeMonitor { get; }
+
+        void Clear();
+        void DoOut();
+        void Reset();
+        void StartMonitoring();
+        void StopMonitoring();
+
+        CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
+        bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
+        bool Remove(TKeyed keyed);
+    }
+
+    interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
+    {
+        new CacheProxy<TKey, TValue> Alloc(TKey key);
+        new bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
+        new IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
+        new bool Remove(TKey key);
+    }
+
     /// <summary>
     /// キャッシュオブジェクトを操作する機能を提供します。
     /// </summary>
     /// <typeparam name="TKeyed">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
     /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKeyed, TKey, TValue>
+    public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
     {
-        internal CacheStore(string name)
-        {
-            this.Name = name;
-        }
-
-        private void DataSourceChangeMonitor_Changed(object sender, DataSourceChangeEventArgs<TKeyed> e)
-        {
-            switch (e.ChangeAction)
-            {
-                case CacheChangeAction.Reset:
-                    this.Reset();
-                    break;
-
-                case CacheChangeAction.ResetContains:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Reset(e.Keys);
-                    }
-                    break;
-
-                case CacheChangeAction.Clear:
-                    this.Clear();
-                    break;
-
-                case CacheChangeAction.Remove:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Remove(e.Keys);
-                    }
-                    break;
-
-                case CacheChangeAction.None:
-                default:
-                    break;
-            }
-        }
-
-        private CacheProxy<TKey, TValue> InternalAlloc(TKeyed keyed)
-        {
-            var key = this.KeyBuilder.GetKey(keyed);
-
-            if (m_caches.Contains(key)) { return m_caches[key]; }
-
-            using (m_cacheLock.Scope(LockStatus.Write))
-            {
-                if (this.HasMaxCapacity && m_caches.Count >= this.MaxCapacity)
-                {
-                    // 最大容量を超えるときは、最初の要素を削除します。
-                    m_caches.RemoveAt(0);
-                }
-
-                var item = new CacheProxy<TKey, TValue>()
-                {
-                    Timeout = this.Timeout,
-                    Key = key,
-                    ValueFactoryCallBack = () =>
-                    {
-                        return new CacheValue<TValue>()
-                        {
-                            Value = this.ValueBuilder.GetValue(keyed),
-                            Cached = DateTimeOffset.Now,
-                        };
-                    },
-                };
-
-                if (this.HasTimeout)
-                {
-                    item.TimedOutCallBack = () => this.Remove(keyed);
-                }
-
-                m_caches.Add(item);
-                return item;
-            }
-        }
+        internal CacheStore(string name) => Name = name;
 
         /// <summary>
         /// 指定したキーでキャッシュにアクセスするオブジェクトを取得します。
@@ -101,13 +58,44 @@ namespace MSyics.Cacheyi
         /// <returns>キャッシュを関連付けるオブジェクト</returns>
         public CacheProxy<TKey, TValue> Alloc(TKeyed keyed)
         {
-            #region Doer
             if (keyed == null) { throw new ArgumentNullException(nameof(keyed)); }
-            #endregion
 
-            using (m_cacheLock.Scope(LockStatus.UpgradeableRead))
+            using (CacheLock.Scope(LockStatus.UpgradeableRead))
             {
-                return InternalAlloc(keyed);
+                var key = KeyBuilder.GetKey(keyed);
+
+                if (Caches.Contains(key)) { return Caches[key]; }
+
+                using (CacheLock.Scope(LockStatus.Write))
+                {
+                    if (HasMaxCapacity && Caches.Count >= MaxCapacity)
+                    {
+                        // 最大容量を超えるときは、最初の要素を削除します。
+                        Caches.RemoveAt(0);
+                    }
+
+                    var item = new CacheProxy<TKey, TValue>()
+                    {
+                        Timeout = Timeout,
+                        Key = key,
+                        ValueFactoryCallBack = () =>
+                        {
+                            return new CacheValue<TValue>()
+                            {
+                                Value = ValueBuilder.GetValue(keyed),
+                                Cached = DateTimeOffset.Now,
+                            };
+                        },
+                    };
+
+                    if (HasTimeout)
+                    {
+                        item.TimedOutCallBack = () => Remove(keyed);
+                    }
+
+                    Caches.Add(item);
+                    return item;
+                }
             }
         }
 
@@ -119,7 +107,7 @@ namespace MSyics.Cacheyi
         public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds)
         {
             if (keyeds == null) { yield break; }
-            foreach (var item in keyeds) { yield return InternalAlloc(item); }
+            foreach (var item in keyeds) { yield return Alloc(item); }
         }
 
         /// <summary>
@@ -130,7 +118,7 @@ namespace MSyics.Cacheyi
         /// <returns>取得に成功したかどうかを示す値</returns>
         public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
         {
-            cache = keyed == null ? null : InternalAlloc(keyed);
+            cache = keyed == null ? null : Alloc(keyed);
             return cache != null;
         }
 
@@ -139,25 +127,21 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void Clear()
         {
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (CacheLock.Scope(LockStatus.Write))
             {
-                m_caches.Clear();
+                Caches.Clear();
             }
         }
 
-        private void Reset(IEnumerable<TKeyed> keyeds)
+        private void Reset(IEnumerable<TKey> keys)
         {
-            if (keyeds == null) { return; }
+            if (keys == null) { return; }
 
-            using (m_cacheLock.Scope(LockStatus.Read))
+            using (CacheLock.Scope(LockStatus.Read))
             {
-                foreach (var key in keyeds)
+                foreach (var cache in Caches.Join(keys, x => x.Key, y => y, (x, y) => x))
                 {
-                    var uniqueKey = this.KeyBuilder.GetKey(key);
-                    if (m_caches.Contains(uniqueKey))
-                    {
-                        m_caches[uniqueKey].Reset();
-                    }
+                    cache.Reset();
                 };
             }
         }
@@ -167,24 +151,24 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void Reset()
         {
-            using (m_cacheLock.Scope(LockStatus.Read))
+            using (CacheLock.Scope(LockStatus.Read))
             {
-                foreach (var cache in m_caches)
+                foreach (var cache in Caches)
                 {
                     cache.Reset();
                 }
             }
         }
 
-        private void Remove(IEnumerable<TKeyed> keyeds)
+        private void Remove(IEnumerable<TKey> keys)
         {
-            if (keyeds == null) { return; }
+            if (keys == null) { return; }
 
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (CacheLock.Scope(LockStatus.Write))
             {
-                foreach (var key in keyeds)
+                foreach (var key in keys)
                 {
-                    m_caches.Remove(this.KeyBuilder.GetKey(key));
+                    Caches.Remove(key);
                 }
             }
         }
@@ -198,9 +182,9 @@ namespace MSyics.Cacheyi
         {
             if (keyed == null) { return true; }
 
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (CacheLock.Scope(LockStatus.Write))
             {
-                return m_caches.Remove(this.KeyBuilder.GetKey(keyed));
+                return Caches.Remove(KeyBuilder.GetKey(keyed));
             }
         }
 
@@ -209,10 +193,10 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void StartMonitoring()
         {
-            if (this.CanMonitoring)
+            if (CanMonitoring)
             {
-                this.ChangeMonitor.Changed += new EventHandler<DataSourceChangeEventArgs<TKeyed>>(DataSourceChangeMonitor_Changed);
-                this.ChangeMonitor.Start();
+                ChangeMonitor.Changed += new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_Changed);
+                ChangeMonitor.Start();
             }
         }
 
@@ -221,10 +205,36 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void StopMonitoring()
         {
-            if (this.CanMonitoring)
+            if (CanMonitoring)
             {
-                this.ChangeMonitor.Changed -= new EventHandler<DataSourceChangeEventArgs<TKeyed>>(DataSourceChangeMonitor_Changed);
-                this.ChangeMonitor.Stop();
+                ChangeMonitor.Changed -= new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_Changed);
+                ChangeMonitor.Stop();
+            }
+        }
+
+        private void DataSourceChangeMonitor_Changed(object sender, DataSourceChangeEventArgs<TKey> e)
+        {
+            switch (e.ChangeAction)
+            {
+                case CacheChangeAction.Reset:
+                    Reset();
+                    break;
+
+                case CacheChangeAction.ResetContains:
+                    if (e.Keys != null || e.Keys.Count > 0) { Reset(e.Keys); }
+                    break;
+
+                case CacheChangeAction.Clear:
+                    Clear();
+                    break;
+
+                case CacheChangeAction.Remove:
+                    if (e.Keys != null || e.Keys.Count > 0) { Remove(e.Keys); }
+                    break;
+
+                case CacheChangeAction.None:
+                default:
+                    break;
             }
         }
 
@@ -234,45 +244,41 @@ namespace MSyics.Cacheyi
         /// </summary>
         public void DoOut()
         {
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (CacheLock.Scope(LockStatus.Write))
             {
-                var items = m_caches.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
-                m_caches.Clear();
+                var items = Caches.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
+                Caches.Clear();
                 foreach (var item in items)
                 {
-                    m_caches.Add(item);
+                    Caches.Add(item);
                 }
             }
         }
 
-        internal string Name { get; private set; }
-        internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
-        internal ICacheValueBuilder<TKeyed, TValue> ValueBuilder { get; set; }
-
         /// <summary>
         /// データソースに変更があったことを通知するオブジェクトを取得します。
         /// </summary>
-        public IDataSourceChangeMonitor<TKeyed> ChangeMonitor { get; internal set; }
+        public IDataSourceChangeMonitor<TKey> ChangeMonitor { get; internal set; }
 
         /// <summary>
         /// キャッシュしているオブジェクト数を取得します。
         /// </summary>
-        public int Count => this.m_caches.Count;
+        public int Count => Caches.Count;
 
         /// <summary>
         /// データソースの変更通知を受け取ることができるかどうかを示す値を取得します。
         /// </summary>
-        public bool CanMonitoring => this.ChangeMonitor != null;
+        public bool CanMonitoring => ChangeMonitor != null;
 
         /// <summary>
         /// 最大容量が設定されているかどうかを示す値を取得します。
         /// </summary>
-        public bool HasMaxCapacity => this.MaxCapacity > 0;
+        public bool HasMaxCapacity => MaxCapacity > 0;
 
         /// <summary>
         /// キャッシュオブジェクトの保持期間が設定されているかどうかを示す値を取得します。
         /// </summary>
-        public bool HasTimeout => this.Timeout != TimeSpan.Zero;
+        public bool HasTimeout => Timeout != TimeSpan.Zero;
 
         /// <summary>
         /// キャッシュオブジェクトの保持期間を取得します。
@@ -284,8 +290,12 @@ namespace MSyics.Cacheyi
         /// </summary>
         public int MaxCapacity { get; internal set; } = 0;
 
-        private ReaderWriterLockSlim m_cacheLock = new ReaderWriterLockSlim();
-        private CacheKeyedCollection<TKey, TValue> m_caches = new CacheKeyedCollection<TKey, TValue>();
+        internal string Name { get; private set; }
+        internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
+        internal ICacheValueBuilder<TKeyed, TValue> ValueBuilder { get; set; }
+
+        private ReaderWriterLockSlim CacheLock = new ReaderWriterLockSlim();
+        private CacheKeyedCollection<TKey, TValue> Caches = new CacheKeyedCollection<TKey, TValue>();
 
         /// <summary>
         /// Finalyzer
@@ -297,7 +307,7 @@ namespace MSyics.Cacheyi
                 StopMonitoring();
             }
 
-            this.m_cacheLock.Dispose();
+            CacheLock.Dispose();
         }
     }
 
@@ -306,8 +316,46 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKey">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
     /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKey, TValue> : CacheStore<TKey, TKey, TValue>
+    public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     {
-        internal CacheStore(string name) : base(name) { }
+        private CacheStore<TKey, TKey, TValue> InternalStore { get; }
+
+        internal CacheStore(string name) => InternalStore = new CacheStore<TKey, TKey, TValue>(name);
+
+        internal string Name => InternalStore.Name;
+        internal ICacheKeyBuilder<TKey, TKey> KeyBuilder { get => InternalStore.KeyBuilder; set => InternalStore.KeyBuilder = value; }
+        internal ICacheValueBuilder<TKey, TValue> ValueBuilder { get => InternalStore.ValueBuilder; set => InternalStore.ValueBuilder = value; }
+
+        public IDataSourceChangeMonitor<TKey> ChangeMonitor { get => InternalStore.ChangeMonitor; internal set => InternalStore.ChangeMonitor = value; }
+
+        public bool CanMonitoring => InternalStore.CanMonitoring;
+
+        public int Count => InternalStore.Count;
+
+        public bool HasMaxCapacity => InternalStore.HasMaxCapacity;
+
+        public bool HasTimeout => InternalStore.HasTimeout;
+
+        public int MaxCapacity { get => InternalStore.MaxCapacity; set => InternalStore.MaxCapacity = value; }
+
+        public TimeSpan Timeout { get => InternalStore.Timeout; internal set => InternalStore.Timeout = value; }
+
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => InternalStore.Alloc(keys);
+
+        public CacheProxy<TKey, TValue> Alloc(TKey key) => InternalStore.Alloc(key);
+
+        public void Clear() => InternalStore.Clear();
+
+        public void DoOut() => InternalStore.DoOut();
+
+        public bool Remove(TKey key) => InternalStore.Remove(key);
+
+        public void Reset() => InternalStore.Reset();
+
+        public void StartMonitoring() => InternalStore.StartMonitoring();
+
+        public void StopMonitoring() => InternalStore.StopMonitoring();
+
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => InternalStore.TryAlloc(key, out cache);
     }
 }

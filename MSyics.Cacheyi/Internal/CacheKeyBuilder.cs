@@ -4,7 +4,6 @@ This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using System;
-using System.Diagnostics.Contracts;
 
 namespace MSyics.Cacheyi
 {
@@ -31,10 +30,7 @@ namespace MSyics.Cacheyi
 
         public TKey GetKey(TKeyed keyed)
         {
-            #region Doer
             if (keyed == null) { throw new ArgumentNullException(nameof(keyed)); }
-            #endregion
-
             return Builder(keyed);
         }
     }

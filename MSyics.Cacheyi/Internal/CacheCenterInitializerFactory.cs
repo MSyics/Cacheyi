@@ -40,6 +40,8 @@ namespace MSyics.Cacheyi
                                    });
             foreach (var item in properties)
             {
+                Console.WriteLine(item.PropertyType);
+
                 yield return
                     Expression.Assign(
                         Expression.Property(ParaCenter, item),

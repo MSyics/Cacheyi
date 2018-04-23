@@ -78,10 +78,10 @@ namespace MSyics.Cacheyi.Example
 
             director.Build(() => Fuga)
                     .MakeKey(x => $"{x.a}_{x.b}")
-                    .MakeValue(key =>
+                    .MakeValue(keyed =>
                     {
                         Task.Delay(1000).Wait();
-                        return $"{key.a}{key.b}";
+                        return $"{keyed.a}{keyed.b}";
                     });
         }
     }

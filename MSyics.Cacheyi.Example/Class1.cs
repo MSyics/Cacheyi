@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSyics.Traceyi;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,12 +8,16 @@ namespace MSyics.Cacheyi.Example
 {
     class Class1
     {
+        public Tracer Tracer { get; } = Traceable.Get();
+
         public HogeCacheCenter Hoge { get; set; } = new HogeCacheCenter();
 
         public void Test()
         {
             {
                 var cache = Hoge.Hoge.Alloc((1, 2));
+                Tracer.Information(cache.Get());
+                Traceable.Get().Information("");
                 Console.WriteLine(cache.Get());
                 Console.WriteLine(cache.Get());
                 //cache.Key.KeyedObj.a = 2;

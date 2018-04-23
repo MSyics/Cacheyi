@@ -12,7 +12,7 @@ using System.Threading;
 
 namespace MSyics.Cacheyi
 {
-    interface ICacheStore<TKeyed, TKey, TValue>
+    interface ICacheStore
     {
         bool CanMonitoring { get; }
         bool HasMaxCapacity { get; }
@@ -20,26 +20,33 @@ namespace MSyics.Cacheyi
         int Count { get; }
         int MaxCapacity { get; }
         TimeSpan Timeout { get; }
-        IDataSourceChangeMonitor<TKey> ChangeMonitor { get; }
 
         void Clear();
         void DoOut();
         void Reset();
         void StartMonitoring();
         void StopMonitoring();
+    }
 
+    interface ICacheStore<TKey>
+    {
+        IDataSourceChangeMonitor<TKey> ChangeMonitor { get; }
+    }
+
+    interface ICacheStore<TKey, TValue> : ICacheStore, ICacheStore<TKey>
+    {
+        CacheProxy<TKey, TValue> Alloc(TKey key);
+        bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
+        bool Remove(TKey key);
+    }
+
+    interface ICacheStore<TKeyed, TKey, TValue> : ICacheStore, ICacheStore<TKey>
+    {
         CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
         bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
         IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
         bool Remove(TKeyed keyed);
-    }
-
-    interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
-    {
-        new CacheProxy<TKey, TValue> Alloc(TKey key);
-        new bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
-        new IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
-        new bool Remove(TKey key);
     }
 
     /// <summary>

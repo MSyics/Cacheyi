@@ -17,4 +17,8 @@
     <Product>MSyics.Cacheyi</Product>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="CacheStore - コピー.cs" />
+  </ItemGroup>
+
 </Project>

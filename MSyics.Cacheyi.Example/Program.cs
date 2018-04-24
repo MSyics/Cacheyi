@@ -121,7 +121,7 @@ namespace MSyics.Cacheyi.Example
                         s.MaxCapacity = 0;
                         s.Timeout = TimeSpan.FromMilliseconds(1);
                     })
-                    .MakeValue(key =>
+                    .GetValue(key =>
                     {
                         var path = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
                         return new Example.MyData()
@@ -138,16 +138,16 @@ namespace MSyics.Cacheyi.Example
                 s.MaxCapacity = 0;
                 s.Timeout = TimeSpan.FromTicks(2);
             })
-            .MakeKey(x =>
+            .GetKey(x =>
             {
                 return x.Id;
             })
-            .MakeValue(key =>
+            .GetValue(key =>
             {
                 var path = Path.Combine(Directory.GetCurrentDirectory(), "test.txt");
                 return new Example.MyData()
                 {
-                    Id = key.Id,
+                    Id = key,
                     Created = DateTime.Now,
                     Message = Guid.NewGuid().ToString(),
                     Test = "",//File.ReadLines(path).Where(x => x == key.Id.ToString()).Single(),

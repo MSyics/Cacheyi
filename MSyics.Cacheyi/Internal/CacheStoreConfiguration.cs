@@ -23,7 +23,6 @@ namespace MSyics.Cacheyi
             Context = context;
             StoreName = storeName;
             Store = Context.StoreInstanceNamedMapping.Add<TKey, TValue>(Context.CenterType.FullName, StoreName);
-            Store.KeyBuilder = new FuncCacheKeyBuilder<TKey, TKey>() { Builder = key => key };
         }
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
@@ -62,7 +61,7 @@ namespace MSyics.Cacheyi
             Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
-        public void MakeValue(Func<TKey, TValue> builder)
+        public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
@@ -72,7 +71,7 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, IKeyConfiguration<TKeyed, TKey, TValue>, IValueConfiguration<TKeyed, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, IKeyConfiguration<TKeyed, TKey, TValue>, IValueConfiguration<TKey, TValue>
     {
         private CacheContext Context { get; set; }
         private CacheStore<TKeyed, TKey, TValue> Store { get; set; }
@@ -116,22 +115,22 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IValueConfiguration<TKeyed, TValue> MakeKey(Func<TKeyed, TKey> builder)
+        public IValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
             Store.KeyBuilder = new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder };
             return this;
         }
 
-        public void MakeValue(ICacheValueBuilder<TKeyed, TValue> builder)
+        public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
         {
             Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
-        public void MakeValue(Func<TKeyed, TValue> builder)
+        public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            MakeValue(new FuncCacheValueBuilder<TKeyed, TValue>() { Builder = builder });
+            MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
         }
     }
 }

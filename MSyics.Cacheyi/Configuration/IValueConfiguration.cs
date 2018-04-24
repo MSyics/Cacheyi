@@ -16,6 +16,6 @@ namespace MSyics.Cacheyi.Configuration
         /// データソースからオブジェクトを取得する機能を登録します。
         /// </summary>
         /// <param name="builder">データソースからオブジェクトを取得する機能を提供するデリゲート</param>
-        void MakeValue(Func<TKey, TValue> builder);
+        void GetValue(Func<TKey, TValue> builder);
     }
 }

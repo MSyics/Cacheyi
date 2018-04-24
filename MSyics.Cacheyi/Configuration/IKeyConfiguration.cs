@@ -16,6 +16,6 @@ namespace MSyics.Cacheyi.Configuration
         /// キャッシュ関連オブジェクトを区別するキーを派生するオブジェクトを登録します。
         /// </summary>
         /// <param name="builder">キーを派生する機能を提供するデリゲート</param>
-        IValueConfiguration<TKeyed, TValue> MakeKey(Func<TKeyed, TKey> builder);
+        IValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder);
     }
 }

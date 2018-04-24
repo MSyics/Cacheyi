@@ -49,6 +49,9 @@ namespace MSyics.Cacheyi.Example
                 //cache.Key.KeyedObj.a = 2;
                 Console.WriteLine(cache.Get());
                 //cache.Reset().Get();
+
+                // Hoge.Hoge["aaa"]
+                //Hoge.Fuga.Alloc(new Data()).Get().;
             }
         }
     }
@@ -63,30 +66,30 @@ namespace MSyics.Cacheyi.Example
     {
         public CacheStore<(int a, int b), string> Hoge { get; set; }
         public CacheStore<Data, string> Piyo { get; set; }
-        public CacheStore<Data, string, string> Fuga { get; set; }
+        public CacheStore<Data, (int a, int b), string> Fuga { get; set; }
 
         protected override void ConstructStore(CacheStoreDirector director)
         {
             director.Build(() => Hoge)
-                    .MakeValue(key =>
+                    .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();
                         return $"{key.a}{key.b}";
                     });
 
             director.Build(() => Piyo)
-                    .MakeValue(key =>
+                    .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();
                         return $"{key.a}{key.b}";
                     });
 
             director.Build(() => Fuga)
-                    .MakeKey(x => $"{x.a}_{x.b}")
-                    .MakeValue(keyed =>
+                    .GetKey(x => (x.a, x.b))
+                    .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();
-                        return $"{keyed.a}{keyed.b}";
+                        return $"{key.a}{key.b}";
                     });
         }
     }

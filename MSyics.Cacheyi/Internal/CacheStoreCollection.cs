@@ -10,7 +10,9 @@ namespace MSyics.Cacheyi
 {
     internal class CacheStoreCollection
     {
-        public string GetKey(string centerName, string storeName) => $"{centerName}.{storeName}";
+        private ConcurrentDictionary<string, object> Stores { get; } = new ConcurrentDictionary<string, object>();
+
+        private string GetKey(string centerName, string storeName) => $"{centerName}.{storeName}";
 
         public CacheStore<TKey, TValue> Add<TKey, TValue>(string centerName, string storeName)
         {
@@ -30,7 +32,5 @@ namespace MSyics.Cacheyi
             if (!Stores.TryGetValue(name, out var store)) { throw new KeyNotFoundException(name); }
             return store;
         }
-
-        private ConcurrentDictionary<string, object> Stores { get; } = new ConcurrentDictionary<string, object>();
     }
 }

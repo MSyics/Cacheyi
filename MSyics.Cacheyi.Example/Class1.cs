@@ -16,15 +16,10 @@ namespace MSyics.Cacheyi.Example
         {
             {
                 var cache = Hoge.Hoge.Alloc((1, 2));
-                Tracer.Information(cache.Get());
-                Traceable.Get().Information("");
                 Console.WriteLine(cache.Get());
-                Console.WriteLine(cache.Get());
-                //cache.Key.KeyedObj.a = 2;
             }
             {
                 var cache = Hoge.Hoge.Alloc((1, 2));
-                Console.WriteLine(cache.Get());
                 Console.WriteLine(cache.Get());
             }
             {
@@ -73,11 +68,12 @@ namespace MSyics.Cacheyi.Example
             director.Build(() => Hoge)
                     .Settings(x =>
                     {
+                        x.Timeout = new TimeSpan(1);
                     })
                     .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();
-                        return $"{key.a}{key.b}";
+                        return $"{key.a}_{key.b}_{DateTime.Now}";
                     });
 
             director.Build(() => Piyo)

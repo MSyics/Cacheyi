@@ -31,7 +31,7 @@ namespace MSyics.Cacheyi
             {
                 if (Status == CacheStatus.Virtual)
                 {
-                    CacheValue = ValueFactoryCallBack();
+                    CacheValue = GetValueCallBack();
                     Status = CacheStatus.Real;
 
                     if (HasTimeout)
@@ -89,7 +89,7 @@ namespace MSyics.Cacheyi
         public TKey Key { get; internal set; }
 
         internal CacheValue<TValue> CacheValue { get; set; }
-        internal Func<CacheValue<TValue>> ValueFactoryCallBack { get; set; }
+        internal Func<CacheValue<TValue>> GetValueCallBack { get; set; }
         internal Func<bool> TimedOutCallBack { get; set; }
         internal TaskCompletionSource<bool> CancellingTimeout { get; set; }
     }

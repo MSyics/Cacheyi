@@ -13,16 +13,6 @@ namespace MSyics.Cacheyi.Configuration
     public interface ICacheStoreSettings
     {
         /// <summary>
-        /// CacheCenter の型を取得します。
-        /// </summary>
-        Type CenterType { get; }
-
-        /// <summary>
-        /// CacheStore の名前を取得します。
-        /// </summary>
-        string StoreName { get; }
-
-        /// <summary>
         /// キャッシュできる最大容量を取得または設定します。
         /// </summary>
         int? MaxCapacity { get; set; }
@@ -31,5 +21,11 @@ namespace MSyics.Cacheyi.Configuration
         /// キャッシュの保持期間を取得または設定します。
         /// </summary>
         TimeSpan? Timeout { get; set; }
+    }
+
+    internal class CacheStoreSettings : ICacheStoreSettings
+    {
+        public int? MaxCapacity { get; set; }
+        public TimeSpan? Timeout { get; set; }
     }
 }

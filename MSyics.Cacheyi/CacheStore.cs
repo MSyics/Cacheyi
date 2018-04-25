@@ -46,7 +46,7 @@ namespace MSyics.Cacheyi
                     {
                         Timeout = Timeout,
                         Key = key,
-                        ValueFactoryCallBack = () =>
+                        GetValueCallBack = () =>
                         {
                             return new CacheValue<TValue>()
                             {

@@ -31,12 +31,10 @@ namespace MSyics.Cacheyi
 
             var setting = new CacheStoreSettings()
             {
-                CenterType = Context.CenterType,
-                StoreName = StoreName,
                 MaxCapacity = 0,
                 Timeout = TimeSpan.Zero,
             };
-
+            
             action(setting);
             if (setting.MaxCapacity.HasValue)
             {
@@ -86,8 +84,6 @@ namespace MSyics.Cacheyi
 
             var setting = new CacheStoreSettings()
             {
-                CenterType = Context.CenterType,
-                StoreName = StoreName,
                 MaxCapacity = 0,
                 Timeout = TimeSpan.Zero,
             };

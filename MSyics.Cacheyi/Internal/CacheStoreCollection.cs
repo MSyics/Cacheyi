@@ -14,17 +14,11 @@ namespace MSyics.Cacheyi
 
         private string GetKey(string centerName, string storeName) => $"{centerName}.{storeName}";
 
-        public CacheStore<TKey, TValue> Add<TKey, TValue>(string centerName, string storeName)
-        {
-            var name = GetKey(centerName, storeName);
-            return (CacheStore<TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKey, TValue>(name));
-        }
+        public CacheStore<TKey, TValue> Add<TKey, TValue>(string centerName, string storeName) =>
+            (CacheStore<TKey, TValue>)Stores.GetOrAdd(GetKey(centerName, storeName), new CacheStore<TKey, TValue>());
 
-        public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string centerName, string storeName)
-        {
-            var name = GetKey(centerName, storeName);
-            return (CacheStore<TKeyed, TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKeyed, TKey, TValue>(name));
-        }
+        public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string centerName, string storeName) =>
+            (CacheStore<TKeyed, TKey, TValue>)Stores.GetOrAdd(GetKey(centerName, storeName), new CacheStore<TKeyed, TKey, TValue>());
 
         public object Get(string centerName, string storeName)
         {

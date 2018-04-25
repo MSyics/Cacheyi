@@ -73,7 +73,7 @@ namespace MSyics.Cacheyi.Example
                     .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();
-                        return $"{key.a}_{key.b}_{DateTime.Now}";
+                        return $"{key.a}_{key.a}_{DateTime.Now}";
                     });
 
             director.Build(() => Piyo)

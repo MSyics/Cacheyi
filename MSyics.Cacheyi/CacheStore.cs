@@ -17,10 +17,8 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKeyed">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
     /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKey, TValue>
+    internal class InternalCacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     {
-        internal CacheStore(string name) => Name = name;
-
         /// <summary>
         /// 指定したキーでキャッシュにアクセスするオブジェクトを取得します。
         /// </summary>
@@ -101,7 +99,7 @@ namespace MSyics.Cacheyi
             }
         }
 
-        private void Reset(IEnumerable<TKey> keys)
+        public void Reset(IEnumerable<TKey> keys)
         {
             if (keys == null) { return; }
 
@@ -128,7 +126,7 @@ namespace MSyics.Cacheyi
             }
         }
 
-        private void Remove(IEnumerable<TKey> keys)
+        public void Remove(IEnumerable<TKey> keys)
         {
             if (keys == null) { return; }
 
@@ -153,32 +151,6 @@ namespace MSyics.Cacheyi
             using (CacheLock.Scope(LockStatus.Write))
             {
                 return Proxies.Remove(key);
-            }
-        }
-
-        internal void OnDataSourceChanged(object sender, DataSourceChangedEventArgs<TKey> e)
-        {
-            switch (e.ChangedAction)
-            {
-                case DataSourceChangedAction.Reset:
-                    Reset();
-                    break;
-
-                case DataSourceChangedAction.ResetContains:
-                    if (e.Keys?.Length > 0) { Reset(e.Keys); }
-                    break;
-
-                case DataSourceChangedAction.Clear:
-                    Clear();
-                    break;
-
-                case DataSourceChangedAction.Remove:
-                    if (e.Keys?.Length > 0) { Remove(e.Keys); }
-                    break;
-
-                case DataSourceChangedAction.None:
-                default:
-                    break;
             }
         }
 
@@ -234,36 +206,129 @@ namespace MSyics.Cacheyi
         /// </summary>
         public int MaxCapacity { get; internal set; } = 0;
 
-        internal string Name { get; private set; }
+        internal void OnDataSourceChanged(object sender, DataSourceChangedEventArgs<TKey> e)
+        {
+            switch (e.ChangedAction)
+            {
+                case DataSourceChangedAction.Reset:
+                    Reset();
+                    break;
+
+                case DataSourceChangedAction.ResetContains:
+                    if (e.Keys?.Length > 0) { Reset(e.Keys); }
+                    break;
+
+                case DataSourceChangedAction.Clear:
+                    Clear();
+                    break;
+
+                case DataSourceChangedAction.Remove:
+                    if (e.Keys?.Length > 0) { Remove(e.Keys); }
+                    break;
+
+                case DataSourceChangedAction.None:
+                default:
+                    break;
+            }
+        }
+
         internal ICacheValueBuilder<TKey, TValue> ValueBuilder { get; set; }
 
-        internal ReaderWriterLockSlim CacheLock = new ReaderWriterLockSlim();
-        internal CacheProxyCollection<TKey, TValue> Proxies = new CacheProxyCollection<TKey, TValue>();
+        protected ReaderWriterLockSlim CacheLock = new ReaderWriterLockSlim();
+        protected CacheProxyCollection<TKey, TValue> Proxies = new CacheProxyCollection<TKey, TValue>();
 
         /// <summary>
         /// Finalyzer
         /// </summary>
-        ~CacheStore()
+        ~InternalCacheStore()
         {
             if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
             CacheLock.Dispose();
         }
     }
 
-    public class CacheStore<TKeyed, TKey, TValue> : CacheStore<TKey, TValue>
+    internal interface ICacheStore<TKey, TValue>
     {
-        internal CacheStore(string name) : base(name)
-        {
-        }
+        int MaxCapacity { get; }
+        bool HasMaxCapacity { get; }
+        TimeSpan Timeout { get; }
+        bool HasTimeout { get; }
+        IDataSourceMonitoring<TKey> Monitoring { get; }
+        bool CanMonitoring { get; }
+        int Count { get; }
 
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed) => Alloc(KeyBuilder.GetKey(keyed));
+        CacheProxy<TKey, TValue> Alloc(TKey key);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
+        void Clear();
+        void DoOut();
+        bool Remove(TKey key);
+        void Remove(IEnumerable<TKey> keys);
+        void Reset();
+        void Reset(IEnumerable<TKey> keys);
+        bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
+    }
 
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds) => Alloc(keyeds.Select(x => KeyBuilder.GetKey(x)));
+    internal interface ICacheStore<TKeyed, TKey, TValue> : ICacheStore<TKey, TValue>
+    {
+        CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
+        bool Remove(TKeyed keyed);
+        bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+    }
 
-        public bool Remove(TKeyed keyed) => Remove(KeyBuilder.GetKey(keyed));
+    public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
+    {
+        internal CacheStore() { }
 
-        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => TryAlloc(KeyBuilder.GetKey(keyed), out cache);
+        internal InternalCacheStore<TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TValue>();
+
+        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+        public bool HasMaxCapacity => Internal.HasMaxCapacity;
+        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+        public bool HasTimeout => Internal.HasTimeout;
+        public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
+        public bool CanMonitoring => Internal.CanMonitoring;
+        public int Count => Internal.Count;
+
+        public CacheProxy<TKey, TValue> Alloc(TKey key) => Internal.Alloc(key);
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(key, out cache);
+        public bool Remove(TKey key) => Internal.Remove(key);
+        public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+        public void Clear() => Internal.Clear();
+        public void DoOut() => Internal.DoOut();
+        public void Reset() => Internal.Reset();
+        public void Reset(IEnumerable<TKey> keys) => Internal.Reset(keys);
+    }
+
+    public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
+    {
+        internal CacheStore() { }
 
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
+        internal InternalCacheStore<TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TValue>();
+
+        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+        public bool HasMaxCapacity => Internal.HasMaxCapacity;
+        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+        public bool HasTimeout => Internal.HasTimeout;
+        public int Count => Internal.Count;
+        public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
+        public bool CanMonitoring => Internal.CanMonitoring;
+
+        public CacheProxy<TKey, TValue> Alloc(TKey key) => Internal.Alloc(key);
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(key, out cache);
+        public bool Remove(TKey key) => Internal.Remove(key);
+        public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+        public void Clear() => Internal.Clear();
+        public void DoOut() => Internal.DoOut();
+        public void Reset() => Internal.Reset();
+        public void Reset(IEnumerable<TKey> keys) => Internal.Reset(keys);
+
+        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed) => Alloc(KeyBuilder.GetKey(keyed));
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds) => Alloc(keyeds.Select(x => KeyBuilder.GetKey(x)));
+        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => TryAlloc(KeyBuilder.GetKey(keyed), out cache);
+        public bool Remove(TKeyed keyed) => Remove(KeyBuilder.GetKey(keyed));
     }
 }

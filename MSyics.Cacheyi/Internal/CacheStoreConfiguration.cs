@@ -51,14 +51,14 @@ namespace MSyics.Cacheyi
         public ICacheValueConfiguration<TKey, TValue> WithMonitoring(IDataSourceMonitoring<TKey> monitor)
         {
             Store.Monitoring = monitor ?? throw new ArgumentNullException(nameof(monitor));
-            Store.Monitoring.Changed += Store.OnDataSourceChanged;
+            Store.Monitoring.Changed += Store.Internal.OnDataSourceChanged;
             return this;
         }
 
         public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            Store.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
         }
     }
 
@@ -117,7 +117,7 @@ namespace MSyics.Cacheyi
         public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            Store.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
         }
     }
 }

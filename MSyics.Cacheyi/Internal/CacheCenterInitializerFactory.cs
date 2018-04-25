@@ -45,7 +45,7 @@ namespace MSyics.Cacheyi
                         Expression.Property(ParaCenter, item),
                         Expression.Convert(
                             Expression.Constant(
-                                center.Context.StoreInstanceNamedMapping.Get(center.Context.CenterType.FullName, item.Name),
+                                center.Context.Stores.Get(center.Context.CenterType.FullName, item.Name),
                                 typeof(object)),
                             item.PropertyType));
             }

@@ -10,12 +10,12 @@ namespace MSyics.Cacheyi.Configuration
     /// <summary>
     /// キーについての設定を行います。
     /// </summary>
-    public interface IKeyConfiguration<TKeyed, TKey, TValue>
+    public interface ICacheKeyConfiguration<TKeyed, TKey, TValue>
     {
         /// <summary>
-        /// キャッシュ関連オブジェクトを区別するキーを派生するオブジェクトを登録します。
+        /// キャッシュオブジェクトを区別するためのキーを取得します。
         /// </summary>
-        /// <param name="builder">キーを派生する機能を提供するデリゲート</param>
-        IValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder);
+        /// <param name="builder">キーを取得する機能を提供するデリゲート</param>
+        ICacheValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder);
     }
 }

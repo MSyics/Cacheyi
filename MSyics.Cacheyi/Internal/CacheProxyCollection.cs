@@ -13,9 +13,9 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKey">キー</typeparam>
     /// <typeparam name="TValue">キャッシュ</typeparam>
-    internal sealed class CacheKeyedCollection<TKey, TValue> : KeyedCollection<TKey, CacheProxy<TKey, TValue>>
+    internal sealed class CacheProxyCollection<TKey, TValue> : KeyedCollection<TKey, CacheProxy<TKey, TValue>>
     {
-        public CacheKeyedCollection() : base(null, 0) { }
+        public CacheProxyCollection() : base(null, 0) { }
         protected override TKey GetKeyForItem(CacheProxy<TKey, TValue> item) => item.Key;
     }
 }

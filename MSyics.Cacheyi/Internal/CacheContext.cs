@@ -11,11 +11,13 @@ namespace MSyics.Cacheyi
     internal class CacheContext
     {
         public Type CenterType { get; set; }
+        public ConcurrentDictionary<Type, Action<CacheCenter>> CenterInitializers => Context.CenterInitializers;
+        public CacheStoreCollection Stores => Context.Stores;
 
-        public ConcurrentDictionary<Type, Action<CacheCenter>> CenterInitializerTypedMapping => _centerInitializerTypedMapping;
-        private static readonly ConcurrentDictionary<Type, Action<CacheCenter>> _centerInitializerTypedMapping = new ConcurrentDictionary<Type, Action<CacheCenter>>();
-
-        public CacheStoreNamedMapping StoreInstanceNamedMapping => _storeInstanceNamedMapping;
-        private static readonly CacheStoreNamedMapping _storeInstanceNamedMapping = new CacheStoreNamedMapping();
+        static class Context
+        {
+            public static readonly ConcurrentDictionary<Type, Action<CacheCenter>> CenterInitializers = new ConcurrentDictionary<Type, Action<CacheCenter>>();
+            public static readonly CacheStoreCollection Stores = new CacheStoreCollection();
+        }
     }
 }

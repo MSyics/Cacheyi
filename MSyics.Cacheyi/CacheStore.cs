@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MSyics.Cacheyi.Configuration;
-using MSyics.Cacheyi.Monitors;
+using MSyics.Cacheyi.Monitoring;
 using System.Threading;
 
 namespace MSyics.Cacheyi
@@ -32,14 +32,14 @@ namespace MSyics.Cacheyi
 
             using (CacheLock.Scope(LockStatus.UpgradeableRead))
             {
-                if (Caches.Contains(key)) { return Caches[key]; }
+                if (Proxies.Contains(key)) { return Proxies[key]; }
 
                 using (CacheLock.Scope(LockStatus.Write))
                 {
-                    if (HasMaxCapacity && Caches.Count >= MaxCapacity)
+                    if (HasMaxCapacity && Proxies.Count >= MaxCapacity)
                     {
                         // 最大容量を超えるときは、最初の要素を削除します。
-                        Caches.RemoveAt(0);
+                        Proxies.RemoveAt(0);
                     }
 
                     var item = new CacheProxy<TKey, TValue>()
@@ -61,7 +61,7 @@ namespace MSyics.Cacheyi
                         item.TimedOutCallBack = () => Remove(key);
                     }
 
-                    Caches.Add(item);
+                    Proxies.Add(item);
                     return item;
                 }
             }
@@ -97,7 +97,7 @@ namespace MSyics.Cacheyi
         {
             using (CacheLock.Scope(LockStatus.Write))
             {
-                Caches.Clear();
+                Proxies.Clear();
             }
         }
 
@@ -107,7 +107,7 @@ namespace MSyics.Cacheyi
 
             using (CacheLock.Scope(LockStatus.Read))
             {
-                foreach (var cache in Caches.Join(keys, x => x.Key, y => y, (x, y) => x))
+                foreach (var cache in Proxies.Join(keys, x => x.Key, y => y, (x, y) => x))
                 {
                     cache.Reset();
                 };
@@ -121,7 +121,7 @@ namespace MSyics.Cacheyi
         {
             using (CacheLock.Scope(LockStatus.Read))
             {
-                foreach (var cache in Caches)
+                foreach (var cache in Proxies)
                 {
                     cache.Reset();
                 }
@@ -136,7 +136,7 @@ namespace MSyics.Cacheyi
             {
                 foreach (var key in keys)
                 {
-                    Caches.Remove(key);
+                    Proxies.Remove(key);
                 }
             }
         }
@@ -152,55 +152,31 @@ namespace MSyics.Cacheyi
 
             using (CacheLock.Scope(LockStatus.Write))
             {
-                return Caches.Remove(key);
+                return Proxies.Remove(key);
             }
         }
 
-        /// <summary>
-        /// オブジェクト変更通知機能を登録している場合に変更通知を開始します。
-        /// </summary>
-        public void StartMonitoring()
+        internal void OnDataSourceChanged(object sender, DataSourceChangedEventArgs<TKey> e)
         {
-            if (CanMonitoring)
+            switch (e.ChangedAction)
             {
-                ChangeMonitor.Changed += new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_Changed);
-                ChangeMonitor.Start();
-            }
-        }
-
-        /// <summary>
-        /// オブジェクト変更通知機能を登録している場合に変更通知を停止します。
-        /// </summary>
-        public void StopMonitoring()
-        {
-            if (CanMonitoring)
-            {
-                ChangeMonitor.Changed -= new EventHandler<DataSourceChangeEventArgs<TKey>>(DataSourceChangeMonitor_Changed);
-                ChangeMonitor.Stop();
-            }
-        }
-
-        private void DataSourceChangeMonitor_Changed(object sender, DataSourceChangeEventArgs<TKey> e)
-        {
-            switch (e.ChangeAction)
-            {
-                case CacheChangeAction.Reset:
+                case DataSourceChangedAction.Reset:
                     Reset();
                     break;
 
-                case CacheChangeAction.ResetContains:
-                    if (e.Keys != null || e.Keys.Count > 0) { Reset(e.Keys); }
+                case DataSourceChangedAction.ResetContains:
+                    if (e.Keys?.Length > 0) { Reset(e.Keys); }
                     break;
 
-                case CacheChangeAction.Clear:
+                case DataSourceChangedAction.Clear:
                     Clear();
                     break;
 
-                case CacheChangeAction.Remove:
-                    if (e.Keys != null || e.Keys.Count > 0) { Remove(e.Keys); }
+                case DataSourceChangedAction.Remove:
+                    if (e.Keys?.Length > 0) { Remove(e.Keys); }
                     break;
 
-                case CacheChangeAction.None:
+                case DataSourceChangedAction.None:
                 default:
                     break;
             }
@@ -214,29 +190,29 @@ namespace MSyics.Cacheyi
         {
             using (CacheLock.Scope(LockStatus.Write))
             {
-                var items = Caches.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
-                Caches.Clear();
+                var items = Proxies.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
+                Proxies.Clear();
                 foreach (var item in items)
                 {
-                    Caches.Add(item);
+                    Proxies.Add(item);
                 }
             }
         }
 
         /// <summary>
-        /// データソースに変更があったことを通知するオブジェクトを取得します。
-        /// </summary>
-        public IDataSourceChangeMonitor<TKey> ChangeMonitor { get; internal set; }
-
-        /// <summary>
         /// キャッシュしているオブジェクト数を取得します。
         /// </summary>
-        public int Count => Caches.Count;
+        public int Count => Proxies.Count;
+
+        /// <summary>
+        /// データソースに変更があったことを通知するオブジェクトを取得します。
+        /// </summary>
+        public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
 
         /// <summary>
         /// データソースの変更通知を受け取ることができるかどうかを示す値を取得します。
         /// </summary>
-        public bool CanMonitoring => ChangeMonitor != null;
+        public bool CanMonitoring => Monitoring != null;
 
         /// <summary>
         /// 最大容量が設定されているかどうかを示す値を取得します。
@@ -262,18 +238,14 @@ namespace MSyics.Cacheyi
         internal ICacheValueBuilder<TKey, TValue> ValueBuilder { get; set; }
 
         internal ReaderWriterLockSlim CacheLock = new ReaderWriterLockSlim();
-        internal CacheKeyedCollection<TKey, TValue> Caches = new CacheKeyedCollection<TKey, TValue>();
+        internal CacheProxyCollection<TKey, TValue> Proxies = new CacheProxyCollection<TKey, TValue>();
 
         /// <summary>
         /// Finalyzer
         /// </summary>
         ~CacheStore()
         {
-            if (CanMonitoring)
-            {
-                StopMonitoring();
-            }
-
+            if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
             CacheLock.Dispose();
         }
     }
@@ -284,25 +256,13 @@ namespace MSyics.Cacheyi
         {
         }
 
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed)
-        {
-            return Alloc(KeyBuilder.GetKey(keyed));
-        }
+        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed) => Alloc(KeyBuilder.GetKey(keyed));
 
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds)
-        {
-            return Alloc(keyeds.Select(x => KeyBuilder.GetKey(x)));
-        }
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds) => Alloc(keyeds.Select(x => KeyBuilder.GetKey(x)));
 
-        public bool Remove(TKeyed keyed)
-        {
-            return Remove(KeyBuilder.GetKey(keyed));
-        }
+        public bool Remove(TKeyed keyed) => Remove(KeyBuilder.GetKey(keyed));
 
-        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
-        {
-            return TryAlloc(KeyBuilder.GetKey(keyed), out cache);
-        }
+        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => TryAlloc(KeyBuilder.GetKey(keyed), out cache);
 
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
     }

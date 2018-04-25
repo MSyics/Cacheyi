@@ -18,13 +18,12 @@ namespace MSyics.Cacheyi
         public CacheCenter()
         {
             Context = new CacheContext() { CenterType = GetType(), };
-
-            var initializer = new CacheContext().CenterInitializerTypedMapping.GetOrAdd(Context.CenterType, _ =>
+            var init = Context.CenterInitializers.GetOrAdd(Context.CenterType, _ =>
             {
                 ConstructStore(new CacheStoreDirector(Context));
                 return new CacheCenterInitializerFactory().Create(this);
             });
-            initializer(this);
+            init(this);
         }
 
         /// <summary>

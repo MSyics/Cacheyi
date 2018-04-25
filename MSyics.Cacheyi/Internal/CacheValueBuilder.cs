@@ -14,7 +14,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">データソースから取得する値の型</typeparam>
     internal interface ICacheValueBuilder<TKey, TValue>
     {
-        /// <summary>
+/// <summary>
         /// 指定したキーでデータソースから値を取得します。
         /// </summary>
         /// <param name="key">データソースから値を取得するためのキー</param>
@@ -28,15 +28,12 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue"></typeparam>
     internal sealed class FuncCacheValueBuilder<TKey, TValue> : ICacheValueBuilder<TKey, TValue>
     {
-        public Func<TKey, TValue> Builder { get; set; }
+        public Func<TKey, TValue> Build { get; set; }
 
         public TValue GetValue(TKey key)
         {
-            #region Doer
-            if (key == null) { throw new ArgumentNullException("key"); }
-            #endregion
-
-            return Builder(key);
+            if (key == null) { throw new ArgumentNullException(nameof(key)); }
+            return Build(key);
         }
     }
 }

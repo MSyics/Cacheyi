@@ -20,7 +20,7 @@ namespace MSyics.Cacheyi
         public TValue Value { get; internal set; }
 
         /// <summary>
-        /// キャッシュした時刻を取得します。
+        /// キャッシュした時間を取得します。
         /// </summary>
         public DateTimeOffset Cached { get; internal set; }
     }

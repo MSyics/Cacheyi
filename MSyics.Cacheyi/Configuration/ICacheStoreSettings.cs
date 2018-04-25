@@ -8,7 +8,7 @@ using System;
 namespace MSyics.Cacheyi.Configuration
 {
     /// <summary>
-    /// キャッシュストアを構成するための設定値を表します。
+    /// CacheStore の設定値を表します。
     /// </summary>
     public interface ICacheStoreSettings
     {

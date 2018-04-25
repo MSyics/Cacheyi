@@ -3,12 +3,12 @@
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
-namespace MSyics.Cacheyi.Monitors
+namespace MSyics.Cacheyi.Monitoring
 {
     /// <summary>
     /// データソースに変更があった場合のキャッシュストアへの要求を表します。
     /// </summary>
-    public enum CacheChangeAction
+    public enum DataSourceChangedAction
     {
         /// <summary>
         /// 何もしません。

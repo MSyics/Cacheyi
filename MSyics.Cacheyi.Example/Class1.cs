@@ -71,6 +71,9 @@ namespace MSyics.Cacheyi.Example
         protected override void ConstructStore(CacheStoreDirector director)
         {
             director.Build(() => Hoge)
+                    .Settings(x =>
+                    {
+                    })
                     .GetValue(key =>
                     {
                         Task.Delay(1000).Wait();

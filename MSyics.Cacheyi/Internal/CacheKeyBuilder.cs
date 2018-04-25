@@ -24,14 +24,14 @@ namespace MSyics.Cacheyi
     /// デリゲートで CacheKey ビルダー を構築できるようにします。
     /// </summary>
     /// <typeparam name="TKeyed"></typeparam>
-    internal sealed class FuncCacheKeyBuilder<TKeyed, TKey> : ICacheKeyBuilder<TKeyed, TKey>
+    internal sealed class FuncCacheKeyFactory<TKeyed, TKey> : ICacheKeyBuilder<TKeyed, TKey>
     {
-        public Func<TKeyed, TKey> Builder { get; set; }
+        public Func<TKeyed, TKey> Build { get; set; }
 
         public TKey GetKey(TKeyed keyed)
         {
             if (keyed == null) { throw new ArgumentNullException(nameof(keyed)); }
-            return Builder(keyed);
+            return Build(keyed);
         }
     }
 }

@@ -4,7 +4,7 @@ This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using MSyics.Cacheyi.Configuration;
-using MSyics.Cacheyi.Monitors;
+using MSyics.Cacheyi.Monitoring;
 using System;
 
 namespace MSyics.Cacheyi
@@ -12,7 +12,7 @@ namespace MSyics.Cacheyi
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, IValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
         private CacheContext Context { get; set; }
         private CacheStore<TKey, TValue> Store { get; set; }
@@ -22,7 +22,7 @@ namespace MSyics.Cacheyi
         {
             Context = context;
             StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TKey, TValue>(Context.CenterType.FullName, StoreName);
+            Store = Context.Stores.Add<TKey, TValue>(Context.CenterType.FullName, StoreName);
         }
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
@@ -50,28 +50,24 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IValueConfiguration<TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
+        public ICacheValueConfiguration<TKey, TValue> WithMonitoring(IDataSourceMonitoring<TKey> monitor)
         {
-            Store.ChangeMonitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            Store.Monitoring = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            Store.Monitoring.Changed += Store.OnDataSourceChanged;
             return this;
-        }
-
-        public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
-        {
-            Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
         public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
+            Store.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
         }
     }
 
     /// <summary>
     /// CacheStore の設定を行うクラスです。
     /// </summary>
-    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, IKeyConfiguration<TKeyed, TKey, TValue>, IValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
         private CacheContext Context { get; set; }
         private CacheStore<TKeyed, TKey, TValue> Store { get; set; }
@@ -81,7 +77,7 @@ namespace MSyics.Cacheyi
         {
             Context = context;
             StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TKeyed, TKey, TValue>(Context.CenterType.FullName, StoreName);
+            Store = Context.Stores.Add<TKeyed, TKey, TValue>(Context.CenterType.FullName, StoreName);
         }
 
         public IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action)
@@ -109,28 +105,23 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
+        public ICacheKeyConfiguration<TKeyed, TKey, TValue> WithMonitoring(IDataSourceMonitoring<TKey> monitor)
         {
-            Store.ChangeMonitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            Store.Monitoring = monitor ?? throw new ArgumentNullException(nameof(monitor));
             return this;
         }
 
-        public IValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder)
+        public ICacheValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            Store.KeyBuilder = new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder };
+            Store.KeyBuilder = new FuncCacheKeyFactory<TKeyed, TKey>() { Build = builder };
             return this;
-        }
-
-        public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
-        {
-            Store.ValueBuilder = builder ?? throw new ArgumentNullException(nameof(builder));
         }
 
         public void GetValue(Func<TKey, TValue> builder)
         {
             if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
+            Store.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>() { Build = builder };
         }
     }
 }

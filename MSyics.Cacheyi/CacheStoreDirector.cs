@@ -16,10 +16,7 @@ namespace MSyics.Cacheyi
     {
         private CacheContext Context;
 
-        internal CacheStoreDirector(CacheContext context)
-        {
-            Context = context;
-        }
+        internal CacheStoreDirector(CacheContext context) => Context = context;
 
         /// <summary>
         /// 指定した CacheStore 型のプロパティを構築します。

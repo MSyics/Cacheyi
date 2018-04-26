@@ -8,14 +8,14 @@ using System;
 namespace MSyics.Cacheyi.Configuration
 {
     /// <summary>
-    /// キャッシュする値についての設定をします。
+    /// 保持する要素の設定を行います。。
     /// </summary>
     public interface ICacheValueConfiguration<TKey, TValue>
     {
         /// <summary>
-        /// キャッシュするオブジェクトを取得します。
+        /// 保持する要素を取得します。
         /// </summary>
-        /// <param name="builder">指定したキーからキャッシュするオブジェクトを取得する機能を提供するデリゲート</param>
+        /// <param name="builder">指定したキーから保持する要素を取得する機能</param>
         void GetValue(Func<TKey, TValue> builder);
     }
 }

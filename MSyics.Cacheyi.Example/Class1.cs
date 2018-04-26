@@ -62,7 +62,7 @@ namespace MSyics.Cacheyi.Example
         public CacheStore<(int a, int b), string> Hoge { get; set; }
         public CacheStore<Data, string> Piyo { get; set; }
         public CacheStore<Data, (int a, int b), string> Fuga { get; set; }
-        public CacheStore<string, List<string>> Settings { get; set; }
+        //public CacheStore<string, List<string>> Settings { get; set; }
 
         protected override void ConstructStore(CacheStoreDirector director)
         {

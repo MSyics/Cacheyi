@@ -10,7 +10,7 @@ namespace MSyics.Cacheyi
 {
     internal class CacheStoreCollection
     {
-        private ConcurrentDictionary<string, object> Stores { get; } = new ConcurrentDictionary<string, object>();
+        private ConcurrentDictionary<string, object> Stores = new ConcurrentDictionary<string, object>();
 
         private string GetKey(string centerName, string storeName) => $"{centerName}.{storeName}";
 

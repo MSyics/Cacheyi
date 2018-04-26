@@ -8,19 +8,19 @@ using System;
 namespace MSyics.Cacheyi
 {
     /// <summary>
-    /// キャッシュオブジェクトを表します。
+    /// 保持する要素を表します。
     /// </summary>
     public sealed class CacheValue<TValue>
     {
         internal CacheValue() { }
 
         /// <summary>
-        /// キャッシュしたオブジェクトを取得します。
+        /// 要素を取得します。
         /// </summary>
         public TValue Value { get; internal set; }
 
         /// <summary>
-        /// キャッシュした時間を取得します。
+        /// 保持した時間を取得します。
         /// </summary>
         public DateTimeOffset Cached { get; internal set; }
     }

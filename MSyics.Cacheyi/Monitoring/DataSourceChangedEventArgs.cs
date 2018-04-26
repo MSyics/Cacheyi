@@ -20,8 +20,8 @@ namespace MSyics.Cacheyi.Monitoring
         public TKey[] Keys { get; set; }
 
         /// <summary>
-        /// データソースに変更があった場合のキャッシュストアへの要求を取得または設定します。
+        /// データソースに変更があったときの CacheStore への要求を取得または設定します。
         /// </summary>
-        public DataSourceChangedAction ChangedAction { get; set; }
+        public RefreshCacheWith RefreshWith { get; set; }
     }
 }

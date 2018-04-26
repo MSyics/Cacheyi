@@ -13,12 +13,12 @@ namespace MSyics.Cacheyi.Configuration
     public interface ICacheStoreSettings
     {
         /// <summary>
-        /// キャッシュできる最大容量を取得または設定します。
+        /// 保持できる最大容量を取得または設定します。
         /// </summary>
         int? MaxCapacity { get; set; }
 
         /// <summary>
-        /// キャッシュの保持期間を取得または設定します。
+        /// 保持期間を取得または設定します。
         /// </summary>
         TimeSpan? Timeout { get; set; }
     }

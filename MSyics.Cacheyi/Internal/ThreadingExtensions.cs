@@ -43,58 +43,60 @@ namespace MSyics.Cacheyi
     #region ReaderWriterLockSlimScope
     internal static partial class ThreadingExtensions
     {
-        public static ReaderWriterLockSlimScope Scope(this ReaderWriterLockSlim lockAdaptee, LockStatus status) => new ReaderWriterLockSlimScope(lockAdaptee, status);
-
+        public static IDisposable Scope(this ReaderWriterLockSlim lockSlim, LockStatus status)
+        {
+            var scope = new ReaderWriterLockSlimScope()
+            {
+                LockSlim = lockSlim,
+                Status = status,
+            };
+            scope.Enter();
+            return scope;
+        }
         internal class ReaderWriterLockSlimScope : IDisposable
         {
-            public ReaderWriterLockSlimScope(ReaderWriterLockSlim adaptee, LockStatus status)
-            {
-                m_adaptee = adaptee;
-                m_status = status;
+            public ReaderWriterLockSlim LockSlim { get; set; }
+            public LockStatus Status { get; set; } = LockStatus.None;
 
-                switch (status)
+            public void Enter()
+            {
+                switch (Status)
                 {
                     case LockStatus.UpgradeableRead:
-                        m_adaptee.EnterUpgradeableReadLock();
+                        LockSlim.EnterUpgradeableReadLock();
                         break;
-
                     case LockStatus.Write:
-                        m_adaptee.EnterWriteLock();
+                        LockSlim.EnterWriteLock();
                         break;
-
                     case LockStatus.Read:
-                        m_adaptee.EnterReadLock();
+                        LockSlim.EnterReadLock();
                         break;
-
                     case LockStatus.None:
                     default:
                         break;
                 }
             }
 
-            private ReaderWriterLockSlim m_adaptee;
-            private LockStatus m_status = LockStatus.None;
-
-            #region IDisposable Members
-            void IDisposable.Dispose()
+            public void Exit()
             {
-                switch (m_status)
+                switch (Status)
                 {
                     case LockStatus.UpgradeableRead:
-                        m_adaptee.ExitUpgradeableReadLock();
+                        LockSlim.ExitUpgradeableReadLock();
                         break;
                     case LockStatus.Write:
-                        m_adaptee.ExitWriteLock();
+                        LockSlim.ExitWriteLock();
                         break;
                     case LockStatus.Read:
-                        m_adaptee.ExitReadLock();
+                        LockSlim.ExitReadLock();
                         break;
                     case LockStatus.None:
                     default:
                         break;
                 }
             }
-            #endregion
+
+            public void Dispose() => Exit();
         }
     }
 

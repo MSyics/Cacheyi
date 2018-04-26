@@ -6,9 +6,9 @@ http://opensource.org/licenses/mit-license.php
 namespace MSyics.Cacheyi.Monitoring
 {
     /// <summary>
-    /// データソースに変更があった場合のキャッシュストアへの要求を表します。
+    /// データソースに変更があったときの CacheStore への要求を表します。
     /// </summary>
-    public enum DataSourceChangedAction
+    public enum RefreshCacheWith
     {
         /// <summary>
         /// 何もしません。

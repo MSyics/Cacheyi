@@ -3,7 +3,6 @@
 This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
-using MSyics.Cacheyi.Configuration;
 
 namespace MSyics.Cacheyi
 {
@@ -20,7 +19,7 @@ namespace MSyics.Cacheyi
             Context = new CacheContext() { CenterType = GetType(), };
             var init = Context.CenterInitializers.GetOrAdd(Context.CenterType, _ =>
             {
-                ConstructStore(new CacheStoreDirector(Context));
+                ConstructStore(new CacheStoreDirector() { Context = Context });
                 return new CacheCenterInitializerFactory().Create(this);
             });
             init(this);
@@ -29,7 +28,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// CacheStore の設定を行います。
         /// </summary>
-        /// <param name="director">CacheStore を構築するための CacheStoreDirector オブジェクト</param>
+        /// <param name="director">CacheStore を構築するための機能を持つオブジェクト</param>
         protected abstract void ConstructStore(CacheStoreDirector director);
 
         internal CacheContext Context { get; set; }

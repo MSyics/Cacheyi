@@ -29,7 +29,7 @@ namespace MSyics.Cacheyi.Monitoring
         void Stop();
 
         /// <summary>
-        /// 監視中かどうかを示す値を取得します。
+        /// 監視中かどうかを示す値を取得します。監視中の場合は true、それ以外は false。
         /// </summary>
         bool Running { get; }
     }

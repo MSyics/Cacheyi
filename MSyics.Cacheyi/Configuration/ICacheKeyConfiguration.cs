@@ -8,14 +8,14 @@ using System;
 namespace MSyics.Cacheyi.Configuration
 {
     /// <summary>
-    /// キーについての設定を行います。
+    /// 保持する要素を選別するキーの設定を行います。
     /// </summary>
     public interface ICacheKeyConfiguration<TKeyed, TKey, TValue>
     {
         /// <summary>
-        /// キャッシュオブジェクトを区別するためのキーを取得します。
+        /// 保持する要素を選別するキーを取得します。
         /// </summary>
-        /// <param name="builder">キーを取得する機能を提供するデリゲート</param>
+        /// <param name="builder">指定した要素からキーを取得する機能</param>
         ICacheValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder);
     }
 }

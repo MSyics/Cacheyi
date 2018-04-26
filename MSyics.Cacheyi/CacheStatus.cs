@@ -6,17 +6,17 @@ http://opensource.org/licenses/mit-license.php
 namespace MSyics.Cacheyi
 {
     /// <summary>
-    /// キャッシュされるオブジェクトとの関連を表します。
+    /// 要素の保持状態を表します。
     /// </summary>
     public enum CacheStatus
     {
         /// <summary>
-        /// オブジェクトを保持しています。
+        /// 要素を保持しています。
         /// </summary>
         Real,
 
         /// <summary>
-        /// オブジェクトをまだ保持していません。
+        /// 要素を保持していません。
         /// </summary>
         Virtual,
     }

@@ -6,7 +6,6 @@ http://opensource.org/licenses/mit-license.php
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MSyics.Cacheyi.Configuration;
 using MSyics.Cacheyi.Monitoring;
 using System.Threading;
 
@@ -300,6 +299,11 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="keys">キーの一覧</param>
         public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+
+        public CacheProxy<TKey, TValue> this[TKey a]
+        {
+            get { return Alloc(a); }
+        }
     }
 
     /// <summary>

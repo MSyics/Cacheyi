@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace MSyics.Cacheyi
 {
     /// <summary>
-    /// 要素を取得するためのプロキシー</para>
+    /// 要素を取得するためのプロキシー
     /// </summary>
     /// <typeparam name="TKey">キーの型</typeparam>
     /// <typeparam name="TValue">保持要素の型</typeparam>

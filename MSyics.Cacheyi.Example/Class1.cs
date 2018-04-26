@@ -15,6 +15,10 @@ namespace MSyics.Cacheyi.Example
         public void Test()
         {
             {
+                var cache = Hoge.Hoge[(1, 2)];
+                Console.WriteLine(cache.Get());
+            }
+            {
                 var cache = Hoge.Hoge.Alloc((1, 2));
                 Console.WriteLine(cache.Get());
             }

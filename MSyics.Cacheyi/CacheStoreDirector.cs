@@ -30,6 +30,7 @@ namespace MSyics.Cacheyi
         /// 指定した CacheStore 型のプロパティを構築します。
         /// </summary>
         /// <typeparam name="TKeyed">キーの型</typeparam>
+        /// <typeparam name="TKey">キーの型</typeparam>
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
         public ICacheStoreConfiguration<TKeyed, TKey, TValue> Build<TKeyed, TKey, TValue>(Expression<Func<CacheStore<TKeyed, TKey, TValue>>> property) =>

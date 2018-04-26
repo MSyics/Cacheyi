@@ -53,51 +53,52 @@ namespace MSyics.Cacheyi
             scope.Enter();
             return scope;
         }
-        internal class ReaderWriterLockSlimScope : IDisposable
+    }
+
+    internal class ReaderWriterLockSlimScope : IDisposable
+    {
+        public ReaderWriterLockSlim LockSlim { get; set; }
+        public LockStatus Status { get; set; } = LockStatus.None;
+
+        public void Enter()
         {
-            public ReaderWriterLockSlim LockSlim { get; set; }
-            public LockStatus Status { get; set; } = LockStatus.None;
-
-            public void Enter()
+            switch (Status)
             {
-                switch (Status)
-                {
-                    case LockStatus.UpgradeableRead:
-                        LockSlim.EnterUpgradeableReadLock();
-                        break;
-                    case LockStatus.Write:
-                        LockSlim.EnterWriteLock();
-                        break;
-                    case LockStatus.Read:
-                        LockSlim.EnterReadLock();
-                        break;
-                    case LockStatus.None:
-                    default:
-                        break;
-                }
+                case LockStatus.UpgradeableRead:
+                    LockSlim.EnterUpgradeableReadLock();
+                    break;
+                case LockStatus.Write:
+                    LockSlim.EnterWriteLock();
+                    break;
+                case LockStatus.Read:
+                    LockSlim.EnterReadLock();
+                    break;
+                case LockStatus.None:
+                default:
+                    break;
             }
-
-            public void Exit()
-            {
-                switch (Status)
-                {
-                    case LockStatus.UpgradeableRead:
-                        LockSlim.ExitUpgradeableReadLock();
-                        break;
-                    case LockStatus.Write:
-                        LockSlim.ExitWriteLock();
-                        break;
-                    case LockStatus.Read:
-                        LockSlim.ExitReadLock();
-                        break;
-                    case LockStatus.None:
-                    default:
-                        break;
-                }
-            }
-
-            public void Dispose() => Exit();
         }
+
+        public void Exit()
+        {
+            switch (Status)
+            {
+                case LockStatus.UpgradeableRead:
+                    LockSlim.ExitUpgradeableReadLock();
+                    break;
+                case LockStatus.Write:
+                    LockSlim.ExitWriteLock();
+                    break;
+                case LockStatus.Read:
+                    LockSlim.ExitReadLock();
+                    break;
+                case LockStatus.None:
+                default:
+                    break;
+            }
+        }
+
+        public void Dispose() => Exit();
     }
 
     internal enum LockStatus

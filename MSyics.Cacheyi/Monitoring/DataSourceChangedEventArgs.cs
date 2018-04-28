@@ -6,22 +6,22 @@ http://opensource.org/licenses/mit-license.php
 using System;
 using System.Collections.ObjectModel;
 
-namespace MSyics.Cacheyi.Monitors
+namespace MSyics.Cacheyi.Monitoring
 {
     /// <summary>
     /// データソースに変更があったときに発生するイベントデータを格納します。
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
-    public class DataSourceChangeEventArgs<TKey> : EventArgs
+    public class DataSourceChangedEventArgs<TKey> : EventArgs
     {
         /// <summary>
         /// データソースで変更があった要素のキーを取得または設定します。
         /// </summary>
-        public Collection<TKey> Keys { get; set; }
+        public TKey[] Keys { get; set; }
 
         /// <summary>
-        /// データソースに変更があった場合のキャッシュストアへの要求を取得または設定します。
+        /// データソースに変更があったときの CacheStore への要求を取得または設定します。
         /// </summary>
-        public CacheChangeAction ChangeAction { get; set; }
+        public RefreshCacheWith RefreshWith { get; set; }
     }
 }

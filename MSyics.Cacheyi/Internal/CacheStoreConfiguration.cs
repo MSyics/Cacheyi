@@ -4,175 +4,85 @@ This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using MSyics.Cacheyi.Configuration;
-using MSyics.Cacheyi.Monitors;
+using MSyics.Cacheyi.Monitoring;
 using System;
 
 namespace MSyics.Cacheyi
 {
-    /// <summary>
-    /// CacheStore の設定を行うクラスです。
-    /// </summary>
-    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, IValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
-        private CacheContext Context { get; set; }
-        private CacheStore<TKey, TValue> Store { get; set; }
-        private string StoreName { get; set; }
+        private CacheStore<TKey, TValue> Store;
 
-        public CacheStoreConfiguration(CacheContext context, string storeName)
+        public CacheStoreConfiguration(string name)
         {
-            Context = context;
-            StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TKey, TValue>(Context.CenterType.FullName, StoreName);
-            Store.KeyBuilder = new FuncCacheKeyBuilder<TKey, TKey>() { Builder = key => key };
+            Store = new CacheContext().Stores.Add<TKey, TValue>(name);
         }
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
         {
-            #region Doer
-            if (action == null) { throw new ArgumentNullException(nameof(action)); }
-            #endregion
+            var setting = new CacheStoreSettings();
+            action?.Invoke(setting);
+            Store.MaxCapacity = setting.MaxCapacity ?? 0;
+            Store.Timeout = setting.Timeout ?? TimeSpan.Zero;
+            return this;
+        }
 
-            var setting = new CacheStoreSettings()
+        public ICacheValueConfiguration<TKey, TValue> WithMonitoring(IDataSourceMonitoring<TKey> monitor)
+        {
+            Store.Monitoring = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            Store.Monitoring.Changed += Store.Internal.OnDataSourceChanged;
+            return this;
+        }
+
+        public void GetValue(Func<TKey, TValue> builder)
+        {
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>()
             {
-                CenterType = Context.CenterType,
-                StoreName = StoreName,
-                MaxCapacity = 0,
-                Timeout = TimeSpan.Zero,
+                Build = builder ?? throw new ArgumentNullException(nameof(builder))
             };
-
-            action(setting);
-            if (setting.MaxCapacity.HasValue)
-            {
-                Store.MaxCapacity = setting.MaxCapacity.Value;
-            }
-            if (setting.Timeout.HasValue)
-            {
-                Store.Timeout = setting.Timeout.Value;
-            }
-
-            return this;
-        }
-
-        public IValueConfiguration<TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKey> monitor)
-        {
-            #region Doer
-            if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
-            #endregion
-
-            Store.ChangeMonitor = monitor;
-            return this;
-        }
-
-        public void MakeValue(ICacheValueBuilder<TKey, TValue> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.ValueBuilder = builder;
-        }
-
-        public void MakeValue(Func<TKey, TValue> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            MakeValue(new FuncCacheValueBuilder<TKey, TValue>() { Builder = builder });
         }
     }
 
-    /// <summary>
-    /// CacheStore の設定を行うクラスです。
-    /// </summary>
-    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, IKeyConfiguration<TKeyed, TKey, TValue>, IValueConfiguration<TKeyed, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
-        private CacheContext Context { get; set; }
-        private CacheStore<TKeyed, TKey, TValue> Store { get; set; }
-        private string StoreName { get; set; }
+        private CacheStore<TKeyed, TKey, TValue> Store;
 
-        public CacheStoreConfiguration(CacheContext context, string storeName)
+        public CacheStoreConfiguration(string name)
         {
-            Context = context;
-            StoreName = storeName;
-            Store = Context.StoreInstanceNamedMapping.Add<TKeyed, TKey, TValue>(Context.CenterType.FullName, StoreName);
+            Store = new CacheContext().Stores.Add<TKeyed, TKey, TValue>(name);
         }
 
         public IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action)
         {
-            #region Doer
-            if (action == null) { throw new ArgumentNullException(nameof(action)); }
-            #endregion
+            var setting = new CacheStoreSettings();
+            action?.Invoke(setting);
+            Store.MaxCapacity = setting.MaxCapacity ?? 0;
+            Store.Timeout = setting.Timeout ?? TimeSpan.Zero;
+            return this;
+        }
 
-            var setting = new CacheStoreSettings()
+        public ICacheKeyConfiguration<TKeyed, TKey, TValue> WithMonitoring(IDataSourceMonitoring<TKey> monitor)
+        {
+            Store.Monitoring = monitor ?? throw new ArgumentNullException(nameof(monitor));
+            Store.Monitoring.Changed += Store.Internal.OnDataSourceChanged;
+            return this;
+        }
+
+        public ICacheValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder)
+        {
+            Store.KeyBuilder = new FuncCacheKeyFactory<TKeyed, TKey>()
             {
-                CenterType = Context.CenterType,
-                StoreName = StoreName,
-                MaxCapacity = 0,
-                Timeout = TimeSpan.Zero,
+                Build = builder ?? throw new ArgumentNullException(nameof(builder))
             };
+            return this;
+        }
 
-            action(setting);
-            if (setting.MaxCapacity.HasValue)
+        public void GetValue(Func<TKey, TValue> builder)
+        {
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>()
             {
-                Store.MaxCapacity = setting.MaxCapacity.Value;
-            }
-            if (setting.Timeout.HasValue)
-            {
-                Store.Timeout = setting.Timeout.Value;
-            }
-
-            return this;
+                Build = builder ?? throw new ArgumentNullException(nameof(builder))
+            };
         }
-
-        public IKeyConfiguration<TKeyed, TKey, TValue> WithDataSourceChangeMonitor(IDataSourceChangeMonitor<TKeyed> monitor)
-        {
-            #region Doer
-            if (monitor == null) { throw new ArgumentNullException(nameof(monitor)); }
-            #endregion
-
-            Store.ChangeMonitor = monitor;
-            return this;
-        }
-
-        public IValueConfiguration<TKeyed, TValue> MakeUniqueKey(ICacheKeyBuilder<TKeyed, TKey> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.KeyBuilder = builder;
-            return this;
-        }
-
-        public IValueConfiguration<TKeyed, TValue> MakeKey(Func<TKeyed, TKey> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            this.MakeUniqueKey(new FuncCacheKeyBuilder<TKeyed, TKey>() { Builder = builder });
-            return this;
-        }
-
-        public void MakeValue(ICacheValueBuilder<TKeyed, TValue> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            Store.ValueBuilder = builder;
-        }
-
-        public void MakeValue(Func<TKeyed, TValue> builder)
-        {
-            #region Doer
-            if (builder == null) { throw new ArgumentNullException(nameof(builder)); }
-            #endregion
-
-            MakeValue(new FuncCacheValueBuilder<TKeyed, TValue>() { Builder = builder });
-        }
-
-
     }
 }

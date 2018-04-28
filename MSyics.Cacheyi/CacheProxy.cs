@@ -4,17 +4,15 @@ This software is released under the MIT License.
 http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi
 {
     /// <summary>
-    /// <para>キャッシュされるオブジェクトを関連付けます。</para>
-    /// <para>このクラスはオブジェクトを取得するためのプロキシーです。</para>
+    /// 要素を取得するためのプロキシー
     /// </summary>
-    /// <typeparam name="TKey">キー項目の型</typeparam>
-    /// <typeparam name="TValue">キャッシュされるオブジェクトの型</typeparam>
+    /// <typeparam name="TKey">キーの型</typeparam>
+    /// <typeparam name="TValue">保持要素の型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
         private object LockObj = new object();
@@ -22,16 +20,15 @@ namespace MSyics.Cacheyi
         internal CacheProxy() { }
 
         /// <summary>
-        /// オブジェクトを取得します。
+        /// 要素を取得します。
         /// </summary>
-        /// <returns>オブジェクト</returns>
-        public TValue Get()
+        public TValue GetValue()
         {
             lock (LockObj)
             {
                 if (Status == CacheStatus.Virtual)
                 {
-                    CacheValue = ValueFactoryCallBack();
+                    CacheValue = GetValueCallBack();
                     Status = CacheStatus.Real;
 
                     if (HasTimeout)
@@ -44,7 +41,7 @@ namespace MSyics.Cacheyi
         }
 
         /// <summary>
-        /// オブジェクトとの関連を Virtual にします。
+        /// 要素の保持状態をリセットします。
         /// </summary>
         public CacheProxy<TKey, TValue> Reset()
         {
@@ -57,12 +54,12 @@ namespace MSyics.Cacheyi
         }
 
         /// <summary>
-        /// オブジェクトとの関連状態を取得します。
+        /// 要素の保持状態を取得します。
         /// </summary>
         public CacheStatus Status { get; private set; } = CacheStatus.Virtual;
 
         /// <summary>
-        /// オブジェクトの保持期間を経過したかどうか示す値を取得します。
+        /// 要素の保持期間を経過したかどうか示す値を取得します。
         /// </summary>
         public bool TimedOut
         {
@@ -74,22 +71,22 @@ namespace MSyics.Cacheyi
         }
 
         /// <summary>
-        /// オブジェクトの保持期間を取得します。
+        /// 要素の保持期間を取得します。
         /// </summary>
         public TimeSpan Timeout { get; internal set; } = TimeSpan.Zero;
 
         /// <summary>
-        /// タイムアウトするかどうかを示す値を取得します。
+        /// 要素の保持期間を持つかどうかを示す値を取得します。
         /// </summary>
         public bool HasTimeout => Timeout != TimeSpan.Zero;
 
         /// <summary>
-        /// キャッシュオブジェクトのキーを取得します。
+        /// 要素のキーを取得します。
         /// </summary>
         public TKey Key { get; internal set; }
 
         internal CacheValue<TValue> CacheValue { get; set; }
-        internal Func<CacheValue<TValue>> ValueFactoryCallBack { get; set; }
+        internal Func<CacheValue<TValue>> GetValueCallBack { get; set; }
         internal Func<bool> TimedOutCallBack { get; set; }
         internal TaskCompletionSource<bool> CancellingTimeout { get; set; }
     }

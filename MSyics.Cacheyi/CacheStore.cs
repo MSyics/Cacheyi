@@ -6,308 +6,431 @@ http://opensource.org/licenses/mit-license.php
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MSyics.Cacheyi.Configuration;
-using MSyics.Cacheyi.Monitors;
+using MSyics.Cacheyi.Monitoring;
 using System.Threading;
 
 namespace MSyics.Cacheyi
 {
-    /// <summary>
-    /// キャッシュオブジェクトを操作する機能を提供します。
-    /// </summary>
-    /// <typeparam name="TKeyed">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
-    /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKeyed, TKey, TValue>
+    internal interface ICacheStore<TKey, TValue>
     {
-        internal CacheStore(string name)
-        {
-            this.Name = name;
-        }
+        int MaxCapacity { get; }
+        bool HasMaxCapacity { get; }
+        TimeSpan Timeout { get; }
+        bool HasTimeout { get; }
+        IDataSourceMonitoring<TKey> Monitoring { get; }
+        bool CanMonitoring { get; }
+        int Count { get; }
 
-        private void DataSourceChangeMonitor_Changed(object sender, DataSourceChangeEventArgs<TKeyed> e)
+        void Clear();
+        void DoOut();
+        void Reset();
+
+        CacheProxy<TKey, TValue> Alloc(TKey key);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
+        bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
+        bool Remove(TKey key);
+        void Remove(IEnumerable<TKey> keys);
+    }
+
+    internal interface ICacheStore<TKeyed, TKey, TValue> : ICacheStore<TKey, TValue>
+    {
+        CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
+        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
+        bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+        bool Remove(TKeyed keyed);
+        void Remove(IEnumerable<TKeyed> keyeds);
+    }
+
+    internal class InternalCacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
+    {
+        public CacheProxy<TKey, TValue> Alloc(TKey key)
         {
-            switch (e.ChangeAction)
+            if (key == null) { new ArgumentNullException(nameof(key)); }
+
+            using (LockSlim.Scope(LockStatus.UpgradeableRead))
             {
-                case CacheChangeAction.Reset:
-                    this.Reset();
-                    break;
+                if (CacheProxies.Contains(key)) { return CacheProxies[key]; }
 
-                case CacheChangeAction.ResetContains:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Reset(e.Keys);
-                    }
-                    break;
-
-                case CacheChangeAction.Clear:
-                    this.Clear();
-                    break;
-
-                case CacheChangeAction.Remove:
-                    if (e.Keys != null || e.Keys.Count > 0)
-                    {
-                        this.Remove(e.Keys);
-                    }
-                    break;
-
-                case CacheChangeAction.None:
-                default:
-                    break;
-            }
-        }
-
-        private CacheProxy<TKey, TValue> InternalAlloc(TKeyed keyed)
-        {
-            var key = this.KeyBuilder.GetKey(keyed);
-
-            if (m_caches.Contains(key)) { return m_caches[key]; }
-
-            using (m_cacheLock.Scope(LockStatus.Write))
-            {
-                if (this.HasMaxCapacity && m_caches.Count >= this.MaxCapacity)
+                using (LockSlim.Scope(LockStatus.Write))
                 {
-                    // 最大容量を超えるときは、最初の要素を削除します。
-                    m_caches.RemoveAt(0);
-                }
-
-                var item = new CacheProxy<TKey, TValue>()
-                {
-                    Timeout = this.Timeout,
-                    Key = key,
-                    ValueFactoryCallBack = () =>
+                    if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
                     {
-                        return new CacheValue<TValue>()
+                        // 最大容量を超えるときは、最初の要素を削除します。
+                        CacheProxies.RemoveAt(0);
+                    }
+
+                    var item = new CacheProxy<TKey, TValue>()
+                    {
+                        Timeout = Timeout,
+                        Key = key,
+                        GetValueCallBack = () => new CacheValue<TValue>()
                         {
-                            Value = this.ValueBuilder.GetValue(keyed),
+                            Value = ValueBuilder.GetValue(key),
                             Cached = DateTimeOffset.Now,
-                        };
-                    },
-                };
+                        },
+                    };
 
-                if (this.HasTimeout)
-                {
-                    item.TimedOutCallBack = () => this.Remove(keyed);
+                    if (HasTimeout)
+                    {
+                        item.TimedOutCallBack = () => Remove(key);
+                    }
+
+                    CacheProxies.Add(item);
+                    return item;
                 }
-
-                m_caches.Add(item);
-                return item;
             }
         }
 
-        /// <summary>
-        /// 指定したキーでキャッシュにアクセスするオブジェクトを取得します。
-        /// </summary>
-        /// <param name="keyed">キャッシュを区別するためのキー</param>
-        /// <returns>キャッシュを関連付けるオブジェクト</returns>
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed)
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys)
         {
-            #region Doer
-            if (keyed == null) { throw new ArgumentNullException(nameof(keyed)); }
-            #endregion
-
-            using (m_cacheLock.Scope(LockStatus.UpgradeableRead))
-            {
-                return InternalAlloc(keyed);
-            }
+            if (keys == null) { yield break; }
+            foreach (var item in keys) { yield return Alloc(item); }
         }
 
-        /// <summary>
-        /// 指定したキーの一覧からキャッシュにアクセスするオブジェクトの一覧を取得します。
-        /// </summary>
-        /// <param name="keyeds">キャッシュを区別するためのキーの一覧</param>
-        /// <returns>キャッシュを関連付けるオブジェクトの一覧</returns>
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds)
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache)
         {
-            if (keyeds == null) { yield break; }
-            foreach (var item in keyeds) { yield return InternalAlloc(item); }
-        }
-
-        /// <summary>
-        /// 指定したキーでキャッシュにアクセスするオブジェクトを取得します。戻り値は取得に成功したかどうかを示します。
-        /// </summary>
-        /// <param name="keyed">オブジェクトを区別するためのキー</param>
-        /// <param name="cache">キャッシュを関連付けるオブジェクト。取得に失敗した場合は null を設定します。</param>
-        /// <returns>取得に成功したかどうかを示す値</returns>
-        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
-        {
-            cache = keyed == null ? null : InternalAlloc(keyed);
+            cache = key == null ? null : Alloc(key);
             return cache != null;
         }
 
-        /// <summary>
-        /// すべてのキャッシュを削除します。
-        /// </summary>
         public void Clear()
         {
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (LockSlim.Scope(LockStatus.Write))
             {
-                m_caches.Clear();
+                CacheProxies.Clear();
             }
         }
 
-        private void Reset(IEnumerable<TKeyed> keyeds)
+        public void Reset(IEnumerable<TKey> keys)
         {
-            if (keyeds == null) { return; }
+            if (keys == null) { return; }
 
-            using (m_cacheLock.Scope(LockStatus.Read))
+            using (LockSlim.Scope(LockStatus.Read))
             {
-                foreach (var key in keyeds)
+                foreach (var cache in CacheProxies.Join(keys, x => x.Key, y => y, (x, y) => x))
                 {
-                    var uniqueKey = this.KeyBuilder.GetKey(key);
-                    if (m_caches.Contains(uniqueKey))
-                    {
-                        m_caches[uniqueKey].Reset();
-                    }
+                    cache.Reset();
                 };
             }
         }
 
-        /// <summary>
-        /// すべてのキャッシュされたオブジェクトとの関連をリセットします。
-        /// </summary>
         public void Reset()
         {
-            using (m_cacheLock.Scope(LockStatus.Read))
+            using (LockSlim.Scope(LockStatus.Read))
             {
-                foreach (var cache in m_caches)
+                foreach (var cache in CacheProxies)
                 {
                     cache.Reset();
                 }
             }
         }
 
-        private void Remove(IEnumerable<TKeyed> keyeds)
+        public void Remove(IEnumerable<TKey> keys)
         {
-            if (keyeds == null) { return; }
+            if (keys == null) { return; }
 
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (LockSlim.Scope(LockStatus.Write))
             {
-                foreach (var key in keyeds)
+                foreach (var key in keys)
                 {
-                    m_caches.Remove(this.KeyBuilder.GetKey(key));
+                    CacheProxies.Remove(key);
                 }
             }
         }
 
-        /// <summary>
-        /// 指定したキー項目のキャッシュを削除します。
-        /// </summary>
-        /// <param name="keyed">削除するキャッシュのキー</param>
-        /// <returns>キャッシュが正常に削除された場合は true。それ以外は false。キャッシュが見つからない場合にも false を返します。</returns>
-        public bool Remove(TKeyed keyed)
+        public bool Remove(TKey key)
         {
-            if (keyed == null) { return true; }
+            if (key == null) { return true; }
 
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (LockSlim.Scope(LockStatus.Write))
             {
-                return m_caches.Remove(this.KeyBuilder.GetKey(keyed));
+                return CacheProxies.Remove(key);
             }
         }
 
-        /// <summary>
-        /// オブジェクト変更通知機能を登録している場合に変更通知を開始します。
-        /// </summary>
-        public void StartMonitoring()
-        {
-            if (this.CanMonitoring)
-            {
-                this.ChangeMonitor.Changed += new EventHandler<DataSourceChangeEventArgs<TKeyed>>(DataSourceChangeMonitor_Changed);
-                this.ChangeMonitor.Start();
-            }
-        }
-
-        /// <summary>
-        /// オブジェクト変更通知機能を登録している場合に変更通知を停止します。
-        /// </summary>
-        public void StopMonitoring()
-        {
-            if (this.CanMonitoring)
-            {
-                this.ChangeMonitor.Changed -= new EventHandler<DataSourceChangeEventArgs<TKeyed>>(DataSourceChangeMonitor_Changed);
-                this.ChangeMonitor.Stop();
-            }
-        }
-
-        /// <summary>
-        /// <para>保持しているキャッシュを圧縮して整理します。</para>
-        /// <para>この操作は、実オブジェクトを保持していないキャッシュアクセスオブジェクトを削除します。</para>
-        /// </summary>
         public void DoOut()
         {
-            using (m_cacheLock.Scope(LockStatus.Write))
+            using (LockSlim.Scope(LockStatus.Write))
             {
-                var items = m_caches.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
-                m_caches.Clear();
+                var items = CacheProxies.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
+                CacheProxies.Clear();
                 foreach (var item in items)
                 {
-                    m_caches.Add(item);
+                    CacheProxies.Add(item);
                 }
             }
         }
 
-        internal string Name { get; private set; }
-        internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
-        internal ICacheValueBuilder<TKeyed, TValue> ValueBuilder { get; set; }
+        internal void OnDataSourceChanged(object sender, DataSourceChangedEventArgs<TKey> e)
+        {
+            switch (e.RefreshWith)
+            {
+                case RefreshCacheWith.Reset:
+                    Reset();
+                    break;
 
-        /// <summary>
-        /// データソースに変更があったことを通知するオブジェクトを取得します。
-        /// </summary>
-        public IDataSourceChangeMonitor<TKeyed> ChangeMonitor { get; internal set; }
+                case RefreshCacheWith.ResetContains:
+                    if (e.Keys?.Length > 0) { Reset(e.Keys); }
+                    break;
 
-        /// <summary>
-        /// キャッシュしているオブジェクト数を取得します。
-        /// </summary>
-        public int Count => this.m_caches.Count;
+                case RefreshCacheWith.Clear:
+                    Clear();
+                    break;
 
-        /// <summary>
-        /// データソースの変更通知を受け取ることができるかどうかを示す値を取得します。
-        /// </summary>
-        public bool CanMonitoring => this.ChangeMonitor != null;
+                case RefreshCacheWith.Remove:
+                    if (e.Keys?.Length > 0) { Remove(e.Keys); }
+                    break;
 
-        /// <summary>
-        /// 最大容量が設定されているかどうかを示す値を取得します。
-        /// </summary>
-        public bool HasMaxCapacity => this.MaxCapacity > 0;
+                case RefreshCacheWith.None:
+                default:
+                    break;
+            }
+        }
 
-        /// <summary>
-        /// キャッシュオブジェクトの保持期間が設定されているかどうかを示す値を取得します。
-        /// </summary>
-        public bool HasTimeout => this.Timeout != TimeSpan.Zero;
-
-        /// <summary>
-        /// キャッシュオブジェクトの保持期間を取得します。
-        /// </summary>
+        public int Count => CacheProxies.Count;
+        public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
+        public bool CanMonitoring => Monitoring != null;
+        public bool HasMaxCapacity => MaxCapacity > 0;
+        public bool HasTimeout => Timeout != TimeSpan.Zero;
         public TimeSpan Timeout { get; internal set; } = TimeSpan.Zero;
-
-        /// <summary>
-        /// インスタンスの最大キャッシュ容量を取得します。
-        /// </summary>
         public int MaxCapacity { get; internal set; } = 0;
 
-        private ReaderWriterLockSlim m_cacheLock = new ReaderWriterLockSlim();
-        private CacheKeyedCollection<TKey, TValue> m_caches = new CacheKeyedCollection<TKey, TValue>();
+        internal ICacheValueBuilder<TKey, TValue> ValueBuilder { get; set; }
 
-        /// <summary>
-        /// Finalyzer
-        /// </summary>
-        ~CacheStore()
+        protected ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
+        protected CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
+
+        ~InternalCacheStore()
         {
-            if (CanMonitoring)
-            {
-                StopMonitoring();
-            }
-
-            this.m_cacheLock.Dispose();
+            if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
+            LockSlim.Dispose();
         }
     }
 
     /// <summary>
-    /// キャッシュオブジェクトを操作する機能を提供します。
+    /// 要素を保持します。
     /// </summary>
-    /// <typeparam name="TKey">キャッシュするオブジェクトを区別するためのキーの型</typeparam>
-    /// <typeparam name="TValue">キャッシュするオブジェクトの型</typeparam>
-    public class CacheStore<TKey, TValue> : CacheStore<TKey, TKey, TValue>
+    /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
+    /// <typeparam name="TValue">要素の型</typeparam>
+    public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     {
-        internal CacheStore(string name) : base(name) { }
+        internal CacheStore() { }
+        internal InternalCacheStore<TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TValue>();
+
+        /// <summary>
+        /// 要素の最大保持量を取得します。
+        /// </summary>
+        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+
+        /// <summary>
+        /// /最大保持量を持っているかどうかを示す値を取得します。
+        /// </summary>
+        public bool HasMaxCapacity => Internal.HasMaxCapacity;
+
+        /// <summary>
+        /// 要素の保持期間を取得します。
+        /// </summary>
+        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+
+        /// <summary>
+        /// 保持期間を持っているかどうかを示す値を取得します。
+        /// </summary>
+        public bool HasTimeout => Internal.HasTimeout;
+
+        /// <summary>
+        /// データソース監視オブジェクトを取得します。
+        /// </summary>
+        public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
+
+        /// <summary>
+        /// データソース監視ができるかどうかを示す値を取得します。
+        /// </summary>
+        public bool CanMonitoring => Internal.CanMonitoring;
+
+        /// <summary>
+        /// 要素の保持数を取得します。
+        /// </summary>
+        public int Count => Internal.Count;
+
+
+        /// <summary>
+        /// 保持している要素すべて削除します。
+        /// </summary>
+        public void Clear() => Internal.Clear();
+
+        /// <summary>
+        /// <para>保持している要素を圧縮して整理します。</para>
+        /// <para>この操作は、実要素を保持していない要素を削除します。</para>
+        /// </summary>
+        public void DoOut() => Internal.DoOut();
+
+        /// <summary>
+        /// すべての要素をリセットします。
+        /// </summary>
+        public void Reset() => Internal.Reset();
+
+        /// <summary>
+        /// 指定したキーで要素を引き当てます。
+        /// </summary>
+        /// <param name="key">要素を選別するキー</param>
+        public CacheProxy<TKey, TValue> Alloc(TKey key) => Internal.Alloc(key);
+
+        /// <summary>
+        /// 指定したキーの一覧に一致する要素を引き当てます。
+        /// </summary>
+        /// <param name="keys">キーの一覧</param>
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+
+        /// <summary>
+        /// 指定したキーで要素の引当を試みます。
+        /// </summary>
+        /// <param name="key">要素を選別するキー</param>
+        /// <param name="cache">要素</param>
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(key, out cache);
+
+        /// <summary>
+        /// 指定したキーで要素を削除します。
+        /// </summary>
+        /// <param name="key">要素を識別するキー</param>
+        public bool Remove(TKey key) => Internal.Remove(key);
+
+        /// <summary>
+        /// 指定したキーの一覧に一致する要素を削除します。
+        /// </summary>
+        /// <param name="keys">キーの一覧</param>
+        public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+
+        public CacheProxy<TKey, TValue> this[TKey a]
+        {
+            get { return Alloc(a); }
+        }
+    }
+
+    /// <summary>
+    /// 要素を保持します。
+    /// </summary>
+    /// <typeparam name="TKeyed">要素のキーを保有する型</typeparam>
+    /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
+    /// <typeparam name="TValue">要素の型</typeparam>
+    public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
+    {
+        internal CacheStore() { }
+        internal InternalCacheStore<TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TValue>();
+        internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
+
+        /// <summary>
+        /// 要素の最大保持量を取得します。
+        /// </summary>
+        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+
+        /// <summary>
+        /// /最大保持量を持っているかどうかを示す値を取得します。
+        /// </summary>
+        public bool HasMaxCapacity => Internal.HasMaxCapacity;
+
+        /// <summary>
+        /// 要素の保持期間を取得します。
+        /// </summary>
+        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+
+        /// <summary>
+        /// 保持期間を持っているかどうかを示す値を取得します。
+        /// </summary>
+        public bool HasTimeout => Internal.HasTimeout;
+
+        /// <summary>
+        /// データソース監視オブジェクトを取得します。
+        /// </summary>
+        public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
+
+        /// <summary>
+        /// データソース監視ができるかどうかを示す値を取得します。
+        /// </summary>
+        public bool CanMonitoring => Internal.CanMonitoring;
+
+        /// <summary>
+        /// 要素の保持数を取得します。
+        /// </summary>
+        public int Count => Internal.Count;
+
+
+        /// <summary>
+        /// 保持している要素すべて削除します。
+        /// </summary>
+        public void Clear() => Internal.Clear();
+
+        /// <summary>
+        /// <para>保持している要素を圧縮して整理します。</para>
+        /// <para>この操作は、実要素を保持していない要素を削除します。</para>
+        /// </summary>
+        public void DoOut() => Internal.DoOut();
+
+        /// <summary>
+        /// すべての要素をリセットします。
+        /// </summary>
+        public void Reset() => Internal.Reset();
+
+        /// <summary>
+        /// 指定したキーで要素を引き当てます。
+        /// </summary>
+        /// <param name="key">要素を選別するキー</param>
+        public CacheProxy<TKey, TValue> Alloc(TKey key) => Internal.Alloc(key);
+
+        /// <summary>
+        /// 指定したキーの一覧に一致する要素を引き当てます。
+        /// </summary>
+        /// <param name="keys">キーの一覧</param>
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+
+        /// <summary>
+        /// 指定したキーで要素の引当を試みます。
+        /// </summary>
+        /// <param name="key">要素を選別するキー</param>
+        /// <param name="cache">要素</param>
+        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(key, out cache);
+
+        /// <summary>
+        /// 指定したキーで要素を削除します。
+        /// </summary>
+        /// <param name="key">要素を識別するキー</param>
+        public bool Remove(TKey key) => Internal.Remove(key);
+
+        /// <summary>
+        /// 指定したキーの一覧に一致する要素を削除します。
+        /// </summary>
+        /// <param name="keys">キーの一覧</param>
+        public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+
+
+        /// <summary>
+        /// 指定したオブジェクトから要素を引き当てます。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed) => Alloc(KeyBuilder.GetKey(keyed));
+
+        /// <summary>
+        /// 指定したオブジェクトの一覧から要素を引き当てます。
+        /// </summary>
+        /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
+        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds) => Alloc(keyeds.Select(x => KeyBuilder.GetKey(x)));
+
+        /// <summary>
+        /// 指定したオブジェクトで要素の引当を試みます。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        /// <param name="cache">要素</param>
+        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => TryAlloc(KeyBuilder.GetKey(keyed), out cache);
+
+        /// <summary>
+        /// 指定したオブジェクトで要素を削除します。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        public bool Remove(TKeyed keyed) => Remove(KeyBuilder.GetKey(keyed));
+
+        /// <summary>
+        /// 指定したオブジェクトの一覧から要素を削除します。
+        /// </summary>
+        /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
+        public void Remove(IEnumerable<TKeyed> keyeds) => Remove(keyeds.Select(x => KeyBuilder.GetKey(x)));
     }
 }

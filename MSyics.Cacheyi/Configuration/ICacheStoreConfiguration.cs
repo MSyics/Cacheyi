@@ -13,9 +13,9 @@ namespace MSyics.Cacheyi.Configuration
     public interface ICacheStoreConfiguration<TKey, TValue> : IMonitoringConfiguration<TKey, TValue>
     {
         /// <summary>
-        /// CacheStore オブジェクトの設定を行います。
+        /// CacheStore の設定を行います。
         /// </summary>
-        /// <param name="action">設定オブジェクト</param>
+        /// <param name="action">CasheStore の設定を行うための機能</param>
         IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action);
     }
 
@@ -25,9 +25,9 @@ namespace MSyics.Cacheyi.Configuration
     public interface ICacheStoreConfiguration<TKeyed, TKey, TValue> : IMonitoringConfiguration<TKeyed, TKey, TValue>
     {
         /// <summary>
-        /// CacheStore オブジェクトの設定を行います。
+        /// CacheStore の設定を行います。
         /// </summary>
-        /// <param name="action">設定オブジェクト</param>
+        /// <param name="action">CasheStore の設定を行うための機能</param>
         IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action);
     }
 }

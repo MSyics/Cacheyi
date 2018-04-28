@@ -43,59 +43,62 @@ namespace MSyics.Cacheyi
     #region ReaderWriterLockSlimScope
     internal static partial class ThreadingExtensions
     {
-        public static ReaderWriterLockSlimScope Scope(this ReaderWriterLockSlim lockAdaptee, LockStatus status) => new ReaderWriterLockSlimScope(lockAdaptee, status);
-
-        internal class ReaderWriterLockSlimScope : IDisposable
+        public static IDisposable Scope(this ReaderWriterLockSlim lockSlim, LockStatus status)
         {
-            public ReaderWriterLockSlimScope(ReaderWriterLockSlim adaptee, LockStatus status)
+            var scope = new ReaderWriterLockSlimScope()
             {
-                m_adaptee = adaptee;
-                m_status = status;
-
-                switch (status)
-                {
-                    case LockStatus.UpgradeableRead:
-                        m_adaptee.EnterUpgradeableReadLock();
-                        break;
-
-                    case LockStatus.Write:
-                        m_adaptee.EnterWriteLock();
-                        break;
-
-                    case LockStatus.Read:
-                        m_adaptee.EnterReadLock();
-                        break;
-
-                    case LockStatus.None:
-                    default:
-                        break;
-                }
-            }
-
-            private ReaderWriterLockSlim m_adaptee;
-            private LockStatus m_status = LockStatus.None;
-
-            #region IDisposable Members
-            void IDisposable.Dispose()
-            {
-                switch (m_status)
-                {
-                    case LockStatus.UpgradeableRead:
-                        m_adaptee.ExitUpgradeableReadLock();
-                        break;
-                    case LockStatus.Write:
-                        m_adaptee.ExitWriteLock();
-                        break;
-                    case LockStatus.Read:
-                        m_adaptee.ExitReadLock();
-                        break;
-                    case LockStatus.None:
-                    default:
-                        break;
-                }
-            }
-            #endregion
+                LockSlim = lockSlim,
+                Status = status,
+            };
+            scope.Enter();
+            return scope;
         }
+    }
+
+    internal class ReaderWriterLockSlimScope : IDisposable
+    {
+        public ReaderWriterLockSlim LockSlim { get; set; }
+        public LockStatus Status { get; set; } = LockStatus.None;
+
+        public void Enter()
+        {
+            switch (Status)
+            {
+                case LockStatus.UpgradeableRead:
+                    LockSlim.EnterUpgradeableReadLock();
+                    break;
+                case LockStatus.Write:
+                    LockSlim.EnterWriteLock();
+                    break;
+                case LockStatus.Read:
+                    LockSlim.EnterReadLock();
+                    break;
+                case LockStatus.None:
+                default:
+                    break;
+            }
+        }
+
+        public void Exit()
+        {
+            switch (Status)
+            {
+                case LockStatus.UpgradeableRead:
+                    LockSlim.ExitUpgradeableReadLock();
+                    break;
+                case LockStatus.Write:
+                    LockSlim.ExitWriteLock();
+                    break;
+                case LockStatus.Read:
+                    LockSlim.ExitReadLock();
+                    break;
+                case LockStatus.None:
+                default:
+                    break;
+            }
+        }
+
+        public void Dispose() => Exit();
     }
 
     internal enum LockStatus

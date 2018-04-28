@@ -5,18 +5,18 @@ http://opensource.org/licenses/mit-license.php
 ****************************************************************/
 using System;
 
-namespace MSyics.Cacheyi.Monitors
+namespace MSyics.Cacheyi.Monitoring
 {
     /// <summary>
     /// データソースに変更があったことを通知する機能を実装します。
     /// </summary>
     /// <typeparam name="TKey">キー</typeparam>
-    public interface IDataSourceChangeMonitor<TKey>
+    public interface IDataSourceMonitoring<TKey>
     {
         /// <summary>
         /// データソースに変更があったときに発生します。
         /// </summary>
-        event EventHandler<DataSourceChangeEventArgs<TKey>> Changed;
+        event EventHandler<DataSourceChangedEventArgs<TKey>> Changed;
 
         /// <summary>
         /// データソースの監視を開始します。
@@ -29,8 +29,8 @@ namespace MSyics.Cacheyi.Monitors
         void Stop();
 
         /// <summary>
-        /// 監視待機中かどうかを示す値を取得します。
+        /// 監視中かどうかを示す値を取得します。監視中の場合は true、それ以外は false。
         /// </summary>
-        bool Waiting { get; }
+        bool Running { get; }
     }
 }

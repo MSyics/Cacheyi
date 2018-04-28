@@ -22,7 +22,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素を取得します。
         /// </summary>
-        public TValue Get()
+        public TValue GetValue()
         {
             lock (LockObj)
             {

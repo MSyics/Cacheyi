@@ -12,19 +12,15 @@ namespace MSyics.Cacheyi
     {
         private ConcurrentDictionary<string, object> Stores = new ConcurrentDictionary<string, object>();
 
-        private string GetKey(string centerName, string storeName) => $"{centerName}.{storeName}";
+        public CacheStore<TKey, TValue> Add<TKey, TValue>(string name) => (CacheStore<TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKey, TValue>());
+        public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string name) => (CacheStore<TKeyed, TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKeyed, TKey, TValue>());
 
-        public CacheStore<TKey, TValue> Add<TKey, TValue>(string centerName, string storeName) =>
-            (CacheStore<TKey, TValue>)Stores.GetOrAdd(GetKey(centerName, storeName), new CacheStore<TKey, TValue>());
-
-        public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string centerName, string storeName) =>
-            (CacheStore<TKeyed, TKey, TValue>)Stores.GetOrAdd(GetKey(centerName, storeName), new CacheStore<TKeyed, TKey, TValue>());
-
-        public object Get(string centerName, string storeName)
+        public object GetValue(string name)
         {
-            var name = GetKey(centerName, storeName);
             if (!Stores.TryGetValue(name, out var store)) { throw new KeyNotFoundException(name); }
             return store;
         }
+
+        public bool Exists(string name) => Stores.Keys.Contains(name);
     }
 }

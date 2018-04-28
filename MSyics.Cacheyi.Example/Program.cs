@@ -7,12 +7,19 @@ using System.IO;
 
 namespace MSyics.Cacheyi.Example
 {
-    class Program
+    class Program : Examplar
     {
         public static MyCacheCenter Cache => new MyCacheCenter();
 
         static void Main(string[] args)
         {
+            new Program()
+                .Add<SetupCacheStore>()
+
+                .Test();
+
+            return;
+
             var c = new Class1();
             c.Test();
 
@@ -36,7 +43,7 @@ namespace MSyics.Cacheyi.Example
                 var tasks = Enumerable.Range(1, 10).Select(i => Task.Factory.StartNew(() =>
                 {
                     var cache = Cache.MyData2.Alloc(key);
-                    var value = cache.Get();
+                    var value = cache.GetValue();
                     Console.WriteLine(value);
                 }));
                 Task.WaitAll(tasks.ToArray());
@@ -45,7 +52,7 @@ namespace MSyics.Cacheyi.Example
                 var tasks = Enumerable.Range(1, 100).Select(i => Task.Factory.StartNew(() =>
                 {
                     var cache = Cache.MyData.Alloc(1);
-                    var value = cache.Get();
+                    var value = cache.GetValue();
                     Console.WriteLine(value);
                 }));
                 Task.WaitAll(tasks.ToArray());
@@ -59,21 +66,21 @@ namespace MSyics.Cacheyi.Example
                 // Get Cache
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData.Alloc(1);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
             System.Threading.Thread.Sleep(1000);
             {
                 // Get Cache
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData.Alloc(1);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
             System.Threading.Thread.Sleep(2100);
             {
                 // After Timeout
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData.Alloc(1);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
         }
 
@@ -89,21 +96,21 @@ namespace MSyics.Cacheyi.Example
                 // Cache Value
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData2.Alloc(key);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
             System.Threading.Thread.Sleep(10000);
             {
                 // Get Cache
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData2.Alloc(key);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
             System.Threading.Thread.Sleep(2100);
             {
                 // After Timeout
                 var cacheCenter = new MyCacheCenter();
                 var hogeCache = cacheCenter.MyData2.Alloc(key);
-                Console.WriteLine(hogeCache.Get());
+                Console.WriteLine(hogeCache.GetValue());
             }
         }
     }

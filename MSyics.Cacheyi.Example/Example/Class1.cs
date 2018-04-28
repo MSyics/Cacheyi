@@ -16,37 +16,37 @@ namespace MSyics.Cacheyi.Example
         {
             {
                 var cache = Hoge.Hoge[(1, 2)];
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Hoge.Alloc((1, 2));
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Hoge.Alloc((1, 2));
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Piyo.Alloc(new Data { a = 1, b = 2 });
-                Console.WriteLine(cache.Get());
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Piyo.Alloc(new Data { a = 1, b = 2 });
-                Console.WriteLine(cache.Get());
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Fuga.Alloc(new Data { a = 1, b = 2 });
-                Console.WriteLine(cache.Get());
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
+                Console.WriteLine(cache.GetValue());
             }
             {
                 var cache = Hoge.Fuga.Alloc(new Data { a = 1, b = 2 });
-                Console.WriteLine(cache.Get());
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
+                Console.WriteLine(cache.GetValue());
                 //cache.Key.KeyedObj.a = 2;
-                Console.WriteLine(cache.Get());
+                Console.WriteLine(cache.GetValue());
                 //cache.Reset().Get();
 
                 // Hoge.Hoge["aaa"]

@@ -10,7 +10,6 @@ namespace MSyics.Cacheyi
 {
     internal class CacheContext
     {
-        public Type CenterType { get; set; }
         public ConcurrentDictionary<Type, Action<CacheCenter>> CenterInitializers => centerInitializers;
         public CacheStoreCollection Stores => stores;
 

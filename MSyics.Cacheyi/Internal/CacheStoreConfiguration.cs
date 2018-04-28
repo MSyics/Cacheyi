@@ -11,13 +11,11 @@ namespace MSyics.Cacheyi
 {
     internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
-        private CacheContext Context;
         private CacheStore<TKey, TValue> Store;
 
-        public CacheStoreConfiguration(CacheContext context, string storeName)
+        public CacheStoreConfiguration(string name)
         {
-            Context = context;
-            Store = Context.Stores.Add<TKey, TValue>(Context.CenterType.FullName, storeName);
+            Store = new CacheContext().Stores.Add<TKey, TValue>(name);
         }
 
         public IMonitoringConfiguration<TKey, TValue> Settings(Action<ICacheStoreSettings> action)
@@ -47,13 +45,11 @@ namespace MSyics.Cacheyi
 
     internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
-        private CacheContext Context;
         private CacheStore<TKeyed, TKey, TValue> Store;
 
-        public CacheStoreConfiguration(CacheContext context, string storeName)
+        public CacheStoreConfiguration(string name)
         {
-            Context = context;
-            Store = Context.Stores.Add<TKeyed, TKey, TValue>(Context.CenterType.FullName, storeName);
+            Store = new CacheContext().Stores.Add<TKeyed, TKey, TValue>(name);
         }
 
         public IMonitoringConfiguration<TKeyed, TKey, TValue> Settings(Action<ICacheStoreSettings> action)

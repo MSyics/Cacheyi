@@ -16,28 +16,28 @@ namespace MSyics.Cacheyi
         private ParameterExpression ParaX = Expression.Parameter(typeof(CacheCenter), "x");
         private ParameterExpression ParaCenter;
 
-        public Action<CacheCenter> Create(CacheCenter center)
+        public Action<CacheCenter> Create(Type center)
         {
-            ParaCenter = Expression.Parameter(center.GetType(), "center");
+            ParaCenter = Expression.Parameter(center, "center");
             var body = Expression.Block(new[] { ParaCenter }, GetExpressions(center));
             var lamda = Expression.Lambda<Action<CacheCenter>>(body, ParaX);
             return lamda.Compile();
         }
 
-        private IEnumerable<Expression> GetExpressions(CacheCenter center)
+        private IEnumerable<Expression> GetExpressions(Type center)
         {
             // $center = $x
-            yield return Expression.Assign(ParaCenter, Expression.Convert(ParaX, center.Context.CenterType));
+            yield return Expression.Assign(ParaCenter, Expression.Convert(ParaX, center));
             // $center.[store] = (StoreType)object;
-            var properties = center.Context
-                                   .CenterType
-                                   .GetTypeInfo()
+            var properties = center.GetTypeInfo()
                                    .DeclaredProperties
                                    .Where(x =>
                                    {
                                        var type = x.PropertyType.GetGenericTypeDefinition();
                                        return type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
                                    });
+
+            var context = new CacheContext();
             foreach (var item in properties)
             {
                 yield return
@@ -45,7 +45,7 @@ namespace MSyics.Cacheyi
                         Expression.Property(ParaCenter, item),
                         Expression.Convert(
                             Expression.Constant(
-                                center.Context.Stores.Get(center.Context.CenterType.FullName, item.Name),
+                                context.Stores.GetValue($"{center.FullName}.{item.Name}"),
                                 typeof(object)),
                             item.PropertyType));
             }

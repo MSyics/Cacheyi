@@ -15,16 +15,16 @@ namespace MSyics.Cacheyi
     public sealed class CacheStoreDirector
     {
         internal CacheStoreDirector() { }
-        internal CacheContext Context { get; set; }
+        private string GetStoreName(MemberExpression exp) => $"{exp.Member.ReflectedType.FullName}.{exp.Member.Name}";
 
         /// <summary>
-        /// 指定した CacheStore 型のプロパティを構築します。
+        /// 指定した CacheStore 型のプロパティを構築します。   
         /// </summary>
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
         public ICacheStoreConfiguration<TKey, TValue> Build<TKey, TValue>(Expression<Func<CacheStore<TKey, TValue>>> property) =>
-            new CacheStoreConfiguration<TKey, TValue>(Context, ((MemberExpression)property.Body).Member.Name);
+            new CacheStoreConfiguration<TKey, TValue>(GetStoreName((MemberExpression)property.Body));
 
         /// <summary>
         /// 指定した CacheStore 型のプロパティを構築します。
@@ -34,6 +34,6 @@ namespace MSyics.Cacheyi
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
         public ICacheStoreConfiguration<TKeyed, TKey, TValue> Build<TKeyed, TKey, TValue>(Expression<Func<CacheStore<TKeyed, TKey, TValue>>> property) =>
-            new CacheStoreConfiguration<TKeyed, TKey, TValue>(Context, ((MemberExpression)property.Body).Member.Name);
+            new CacheStoreConfiguration<TKeyed, TKey, TValue>(GetStoreName((MemberExpression)property.Body));
     }
 }

@@ -16,11 +16,10 @@ namespace MSyics.Cacheyi
         /// </summary>
         public CacheCenter()
         {
-            Context = new CacheContext() { CenterType = GetType(), };
-            var init = Context.CenterInitializers.GetOrAdd(Context.CenterType, _ =>
+            var init = new CacheContext().CenterInitializers.GetOrAdd(GetType(), type =>
             {
-                ConstructStore(new CacheStoreDirector() { Context = Context });
-                return new CacheCenterInitializerFactory().Create(this);
+                ConstructStore(new CacheStoreDirector());
+                return new CacheCenterInitializerFactory().Create(type);
             });
             init(this);
         }
@@ -30,7 +29,5 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="director">CacheStore を構築するための機能を持つオブジェクト</param>
         protected abstract void ConstructStore(CacheStoreDirector director);
-
-        internal CacheContext Context { get; set; }
     }
 }

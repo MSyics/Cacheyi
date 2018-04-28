@@ -8,7 +8,7 @@ Configuration settings of cache context.
 ```csharp
 public class HogeCacheCenter : CacheCenter
 {
-    public CacheStore<Tuple<string>, int> Hoges { get; set; }
+    public CacheStore<string, int> Hoges { get; set; }
 
     protected override void ConstructStore(CacheStoreDirector director)
     {
@@ -19,7 +19,7 @@ public class HogeCacheCenter : CacheCenter
                     x.Timeout = TimeSpan.FromSeconds(3);
                     x.MaxCapacity = 10;
                 })
-                .MakeValue(x =>
+                .GetValue(x =>
                 {
                     return ++i;
                 });
@@ -30,8 +30,8 @@ public class HogeCacheCenter : CacheCenter
 Get Cache
 ```csharp
 var cacheCenter = new HogeCacheCenter();
-var cache = cacheCenter.Hoges.Alloc(Tuple.Create("hogehoge"));
-var value = hogeCache.Get();
+var cache = cacheCenter.Hoges.Alloc("hogehoge");
+var value = hogeCache.GetValue();
 ```
 
 Example
@@ -40,22 +40,22 @@ static void Main(string[] args)
 {
     {
         var cacheCenter = new HogeCacheCenter();
-        var hogeCache = cacheCenter.Hoges.Alloc(Tuple.Create("hogehoge"));
-        Console.WriteLine(hogeCache.Get());
+        var hogeCache = cacheCenter.Hoges.Alloc("hogehoge");
+        Console.WriteLine(hogeCache.GetValue());
         // Get new value : 1
     }
     System.Threading.Thread.Sleep(1000);
     {
         var cacheCenter = new HogeCacheCenter();
-        var hogeCache = cacheCenter.Hoges.Alloc(Tuple.Create("hogehoge"));
-        Console.WriteLine(hogeCache.Get());
+        var hogeCache = cacheCenter.Hoges.Alloc("hogehoge");
+        Console.WriteLine(hogeCache.GetValue());
         // Get cache value : 1
     }
     System.Threading.Thread.Sleep(2100);
     {
         var cacheCenter = new HogeCacheCenter();
-        var hogeCache = cacheCenter.Hoges.Alloc(Tuple.Create("hogehoge"));
-        Console.WriteLine(hogeCache.Get());
+        var hogeCache = cacheCenter.Hoges.Alloc("hogehoge");
+        Console.WriteLine(hogeCache.GetValue());
         // Get new value after timeout : 2
     }
 }

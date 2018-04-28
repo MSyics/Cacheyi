@@ -6,7 +6,6 @@ namespace MSyics
 {
     interface IExample
     {
-        void Setup();
         void Test();
     }
 }

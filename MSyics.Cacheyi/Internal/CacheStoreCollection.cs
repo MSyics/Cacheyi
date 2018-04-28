@@ -20,7 +20,5 @@ namespace MSyics.Cacheyi
             if (!Stores.TryGetValue(name, out var store)) { throw new KeyNotFoundException(name); }
             return store;
         }
-
-        public bool Exists(string name) => Stores.Keys.Contains(name);
     }
 }

@@ -13,4 +13,10 @@
     <ProjectReference Include="..\MSyics.Cacheyi\MSyics.Cacheyi.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="logging.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

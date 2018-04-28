@@ -1,49 +1,36 @@
-﻿using System;
+﻿using MSyics.Traceyi;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi.Example
 {
-    class SetupCacheStore : IExample
+    class SetupExample : IExample
     {
-        class Center : CacheCenter
+        class ExampleCacheCenter : CacheCenter
         {
-            public CacheStore<int, DateTime> DateTimeStore { get; set; }
-            
+            public CacheStore<int, string> DateTimes { get; set; }
 
             protected override void ConstructStore(CacheStoreDirector director)
             {
-                director.Build(() => DateTimeStore)
-                        .GetValue(x =>
-                        {
-                            return DateTime.Now;
-                        });
+                director.Build(() => DateTimes)
+                        .GetValue(x => DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss.fffffff"));
             }
         }
 
-        public void Setup()
-        {
-
-        }
-
-        Center Hoge { get; set; } = new Center();
-        public CacheStore<int, DateTime> DateTimeStore2
-        {
-            get
-            {
-                return Cacheable.Setup(() => DateTimeStore2, config =>
-                {
-                    config.GetValue(x =>
-                    {
-                        return DateTime.Now;
-                    });
-                });
-            }
-        }
+        ExampleCacheCenter Cache { get; set; } = new ExampleCacheCenter();
 
         public void Test()
         {
-            Console.WriteLine(DateTimeStore2[0].GetValue());
+            var tracer = Traceable.Get();
+
+            tracer.Debug(Cache.DateTimes[0].GetValue());
+            Task.Delay(100).Wait();
+            tracer.Debug(Cache.DateTimes[0].GetValue());
+
+            Cache.DateTimes[0].Reset();
+            tracer.Debug(Cache.DateTimes[0].GetValue());
         }
     }
 }

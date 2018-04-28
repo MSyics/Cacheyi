@@ -17,7 +17,6 @@ namespace MSyics
         {
             foreach (var item in Examples)
             {
-                item.Setup();
                 item.Test();
             }
         }

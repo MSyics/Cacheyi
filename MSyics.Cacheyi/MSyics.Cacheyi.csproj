@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/MSyics/Cacheyi</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MSyics/Cacheyi</RepositoryUrl>
@@ -10,7 +10,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseUrl>https://github.com/MSyics/Cacheyi/blob/master/LICENSE</PackageLicenseUrl>
     <Description>Cacheyi is a micro cache management library. by fluent API.</Description>
-    <Copyright>Copyright (c) 2017 MSyics</Copyright>
+    <Copyright>Copyright (c) 2018 MSyics</Copyright>
     <Company></Company>
     <Authors>MSyics</Authors>
     <PackageId>Cacheyi</PackageId>

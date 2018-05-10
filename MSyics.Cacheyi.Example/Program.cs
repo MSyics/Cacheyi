@@ -1,19 +1,19 @@
 ﻿using MSyics.Traceyi;
+using System;
+using System.Threading.Tasks;
 
-namespace MSyics.Cacheyi.Example
+namespace MSyics.Cacheyi
 {
     class Program : Examplar
     {
         static void Main(string[] args)
         {
-            Traceable.Add("logging.json");
-
             new Program()
                 .Add<SetupExample>()
 
-                .Test();
+                .Add<_Example>()
 
-            return;
+                .Test();
         }
     }
 }

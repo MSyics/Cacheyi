@@ -9,18 +9,16 @@
       "Console": [
         {
           "Name": "console",
-          "UseGlobalLock": true,
           "Layout": {
-            "Format": "{class}{tab}{member}{tab}{message}"
+            "Format": "{dateTime:yyyy/MM/dd} {dateTime:HH:mm:ss.ffff}{tab}{action}{tab}{class}.{member}{tab}{message}"
           }
         }
       ],
       "File": [
         {
           "Name": "file",
-          "UseGlobalLock": false,
           "Layout": {
-            "Format": "{dateTime:yyyy/MM/dd}{tab}{dateTime:HH:mm:ss.ffff}{tab}{action}{tab}{operationId}{tab}{activityId}{tab}{class}{tab}{member}{tab}{threadId}{tab}{processId}{tab}{processName}{tab}{machineName}{tab}{message}"
+            "Format": "{dateTime:yyyy/MM/dd} {dateTime:HH:mm:ss.ffff}{tab}{action}{tab}{class}.{member}{tab}{message}"
           }
         }
       ]

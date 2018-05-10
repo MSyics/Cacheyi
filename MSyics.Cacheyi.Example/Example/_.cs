@@ -1,13 +1,14 @@
 ﻿using MSyics.Traceyi;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi
 {
-    class SetupExample : Example
+    class _Example : Example
     {
         class ExampleCacheCenter : CacheCenter
         {
@@ -24,12 +25,9 @@ namespace MSyics.Cacheyi
 
         public override void Test()
         {
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
-            Thread.Sleep(100);
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
+            Enumerable.Range(0, 100000).Select(i => Cache.DateTimes.Alloc(i)).AsParallel().ToArray();
 
-            Cache.DateTimes[0].Reset();
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
+            Tracer.Information(Cache.DateTimes.Alloc(10).GetValue());
         }
     }
 }

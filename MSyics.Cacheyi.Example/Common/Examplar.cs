@@ -1,13 +1,22 @@
-﻿using System;
+﻿using MSyics.Traceyi;
+using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace MSyics
+namespace MSyics.Cacheyi
 {
     abstract class Examplar
     {
-        private List<IExample> Examples { get; } = new List<IExample>();
-        public Examplar Add<T>() where T : IExample, new()
+        static Examplar()
+        {
+            Traceable.Add("logging.json");
+        }
+
+        protected Tracer Tracer { get; } = Traceable.Get();
+        private List<Example> Examples { get; } = new List<Example>();
+
+        public Examplar Add<T>() where T : Example, new()
         {
             Examples.Add(new T());
             return this;
@@ -17,8 +26,13 @@ namespace MSyics
         {
             foreach (var item in Examples)
             {
-                item.Test();
+                using (Tracer.Scope())
+                {
+                    item.Test();
+                }
             }
+
+            Traceable.Shutdown();
         }
     }
 }

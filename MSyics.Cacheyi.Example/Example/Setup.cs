@@ -24,12 +24,12 @@ namespace MSyics.Cacheyi
 
         public override void Test()
         {
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
+            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
             Thread.Sleep(100);
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
+            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
 
-            Cache.DateTimes[0].Reset();
-            Tracer.Debug(Cache.DateTimes[0].GetValue());
+            Cache.DateTimes.Alloc(0).Reset();
+            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
         }
     }
 }

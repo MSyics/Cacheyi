@@ -36,14 +36,16 @@ namespace MSyics.Cacheyi
 
         public void GetValue(Func<TKey, TValue> builder)
         {
-            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>()
+            if (builder == null) throw new ArgumentNullException(nameof(builder));
+
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TKey, TValue>()
             {
-                Build = builder ?? throw new ArgumentNullException(nameof(builder))
+                Build = (_, key) => builder(key)
             };
         }
     }
 
-    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKeyed, TKey, TValue>
     {
         private CacheStore<TKeyed, TKey, TValue> Store;
 
@@ -68,18 +70,18 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public ICacheValueConfiguration<TKey, TValue> GetKey(Func<TKeyed, TKey> builder)
+        ICacheValueConfiguration<TKeyed, TKey, TValue> ICacheKeyConfiguration<TKeyed, TKey, TValue>.GetKey(Func<TKeyed, TKey> builder)
         {
-            Store.KeyBuilder = new FuncCacheKeyFactory<TKeyed, TKey>()
+            Store.Internal.KeyBuilder = new FuncCacheKeyFactory<TKeyed, TKey>()
             {
                 Build = builder ?? throw new ArgumentNullException(nameof(builder))
             };
             return this;
         }
 
-        public void GetValue(Func<TKey, TValue> builder)
+        public void GetValue(Func<TKeyed, TKey, TValue> builder)
         {
-            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TValue>()
+            Store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKeyed, TKey, TValue>()
             {
                 Build = builder ?? throw new ArgumentNullException(nameof(builder))
             };

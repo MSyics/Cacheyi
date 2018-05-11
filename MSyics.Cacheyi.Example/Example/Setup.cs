@@ -22,14 +22,11 @@ namespace MSyics.Cacheyi
 
         ExampleCacheCenter Cache { get; set; } = new ExampleCacheCenter();
 
+        public override string Name => nameof(SetupExample);
+
         public override void Test()
         {
-            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
-            Thread.Sleep(100);
-            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
-
-            Cache.DateTimes.Alloc(0).Reset();
-            Tracer.Debug(Cache.DateTimes.Alloc(0).GetValue());
+            Tracer.Information(Cache.DateTimes.Alloc(0).GetValue());
         }
     }
 }

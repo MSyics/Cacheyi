@@ -8,18 +8,12 @@
     "Listener": {
       "Console": [
         {
-          "Name": "console",
-          "Layout": {
-            "Format": "{dateTime:yyyy/MM/dd} {dateTime:HH:mm:ss.ffff}{tab}{action}{tab}{class}.{member}{tab}{message}"
-          }
+          "Name": "console"
         }
       ],
       "File": [
         {
-          "Name": "file",
-          "Layout": {
-            "Format": "{dateTime:yyyy/MM/dd} {dateTime:HH:mm:ss.ffff}{tab}{action}{tab}{class}.{member}{tab}{message}"
-          }
+          "Name": "file"
         }
       ]
     }

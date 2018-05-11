@@ -26,12 +26,11 @@ namespace MSyics.Cacheyi
         {
             foreach (var item in Examples)
             {
-                using (Tracer.Scope())
+                using (Tracer.Scope(item.Name))
                 {
                     item.Test();
                 }
             }
-
             Traceable.Shutdown();
         }
     }

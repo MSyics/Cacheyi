@@ -2,13 +2,15 @@
   "Traceyi": {
     "Tracer": [
       {
-        "Listeners": [ "console", "file" ]
+        "Listeners": [ "console" ]
       }
     ],
     "Listener": {
       "Console": [
         {
-          "Name": "console"
+          "Name": "console",
+          "UseLock": true  ,
+          "UseAsync": true
         }
       ],
       "File": [

@@ -11,7 +11,7 @@ namespace MSyics.Cacheyi
 {
     internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
     {
-        private CacheStore<TKey, TValue> Store;
+        private readonly CacheStore<TKey, TValue> Store;
 
         public CacheStoreConfiguration(string name)
         {

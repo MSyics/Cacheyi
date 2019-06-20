@@ -3,10 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
+    <RootNamespace>MSyics.Cacheyi.Examples</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Traceyi" Version="2.5.0" />
+    <PackageReference Include="Exampleyi" Version="3.1.0" />
+    <PackageReference Include="Traceyi" Version="2.5.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -14,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="logging.json">
+    <None Update="Traceyi.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

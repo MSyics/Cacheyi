@@ -30,6 +30,8 @@ namespace MSyics.Cacheyi
         bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
         bool Remove(TKeyed keyed);
         void Remove(IEnumerable<TKeyed> keyeds);
+
+        CacheProxy<TKey, TValue> Add(TKey key, TValue value);
     }
 
     internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -44,6 +46,39 @@ namespace MSyics.Cacheyi
         {
             if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
             LockSlim.Dispose();
+        }
+
+        public CacheProxy<TKey, TValue> Add(TKey key, TValue value)
+        {
+            using (LockSlim.Scope(LockStatus.UpgradeableRead))
+            {
+                CacheProxies.Remove(key);
+                using (LockSlim.Scope(LockStatus.Write))
+                {
+                    if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
+                    {
+                        // 最大容量を超えるときは、最初の要素を削除します。
+                        CacheProxies.RemoveAt(0);
+                    }
+                    var item = new CacheProxy<TKey, TValue>()
+                    {
+                        Timeout = Timeout,
+                        Key = key,
+                        GetValueCallBack = () => new CacheValue<TValue>()
+                        {
+                            Value = ValueBuilder.GetValue(default, key),
+                            Cached = DateTimeOffset.Now,
+                        },
+                    };
+                    if (HasTimeout)
+                    {
+                        item.TimedOutCallBack = () => Remove(key);
+                    }
+                    CacheProxies.Add(item);
+                    item.GetValue();
+                    return item;
+                }
+            }
         }
 
         public CacheProxy<TKey, TValue> Alloc(TKeyed keyed)
@@ -190,7 +225,6 @@ namespace MSyics.Cacheyi
             }
         }
 
-
         public int Count => CacheProxies.Count;
         public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
         public bool CanMonitoring => Monitoring != null;
@@ -296,6 +330,13 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="keys">キーの一覧</param>
         public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+
+        /// <summary>
+        /// 指定した要素を登録します。
+        /// </summary>
+        /// <param name="key">要素のキー</param>
+        /// <param name="value">登録する要素</param>
+        public CacheProxy<TKey, TValue> Add(TKey key, TValue value) => Internal.Add(key, value);
     }
 
     /// <summary>
@@ -392,5 +433,12 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
         public void Remove(IEnumerable<TKeyed> keyeds) => Internal.Remove(keyeds);
+
+        /// <summary>
+        /// 指定した要素を登録します。
+        /// </summary>
+        /// <param name="key">要素のキー</param>
+        /// <param name="value">登録する要素</param>
+        public CacheProxy<TKey, TValue> Add(TKey key, TValue value) => Internal.Add(key, value);
     }
 }

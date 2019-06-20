@@ -2,18 +2,18 @@
 using System;
 using System.Threading.Tasks;
 
-namespace MSyics.Cacheyi
+namespace MSyics.Cacheyi.Examples
 {
-    class Program : Examplar
+    class Program : ExampleAggregator
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            new Program()
-                .Add<SetupExample>()
+            await new Program()
+                //.Add<SetupExample>()
+                //.Add<TimeoutExample>()
+                .Add<AddExample>()
 
-                .Add<_Example>()
-
-                .Test();
+                .ShowAsync();
         }
     }
 }

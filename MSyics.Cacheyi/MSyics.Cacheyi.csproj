@@ -2,19 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/MSyics/Cacheyi</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MSyics/Cacheyi</RepositoryUrl>
     <PackageTags>cache</PackageTags>
     <PackageReleaseNotes></PackageReleaseNotes>
-    <PackageLicenseUrl>https://github.com/MSyics/Cacheyi/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseUrl></PackageLicenseUrl>
     <Description>Cacheyi is a micro cache management library. by fluent API.</Description>
     <Copyright>Copyright (c) 2018 MSyics</Copyright>
     <Company></Company>
     <Authors>MSyics</Authors>
     <PackageId>Cacheyi</PackageId>
     <Product>MSyics.Cacheyi</Product>
+    <AssemblyVersion>2.4.0.0</AssemblyVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

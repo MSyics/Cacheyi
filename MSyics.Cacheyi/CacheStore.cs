@@ -31,7 +31,7 @@ namespace MSyics.Cacheyi
         bool Remove(TKeyed keyed);
         void Remove(IEnumerable<TKeyed> keyeds);
 
-        CacheProxy<TKey, TValue> Add(TKey key, TValue value);
+        CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
     }
 
     internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -39,8 +39,8 @@ namespace MSyics.Cacheyi
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
 
-        protected ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
-        protected CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
+        private ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
+        private CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
 
         ~InternalCacheStore()
         {
@@ -48,35 +48,41 @@ namespace MSyics.Cacheyi
             LockSlim.Dispose();
         }
 
-        public CacheProxy<TKey, TValue> Add(TKey key, TValue value)
+        private CacheProxy<TKey, TValue> AddCachProxy(TKey key, Func<CacheValue<TValue>> getValueCallback)
+        {
+            if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
+            {
+                // 最大容量を超えるときは、最初の要素を削除します。
+                CacheProxies.RemoveAt(0);
+            }
+            var item = new CacheProxy<TKey, TValue>()
+            {
+                Timeout = Timeout,
+                Key = key,
+                GetValueCallBack = getValueCallback,
+            };
+            if (HasTimeout)
+            {
+                item.TimedOutCallBack = () => Remove(key);
+            }
+            CacheProxies.Add(item);
+            return item;
+        }
+
+        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value)
         {
             using (LockSlim.Scope(LockStatus.UpgradeableRead))
             {
+                var key = KeyBuilder.GetKey(keyed);
                 CacheProxies.Remove(key);
                 using (LockSlim.Scope(LockStatus.Write))
                 {
-                    if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
+                    var proxy = AddCachProxy(key, () => new CacheValue<TValue>()
                     {
-                        // 最大容量を超えるときは、最初の要素を削除します。
-                        CacheProxies.RemoveAt(0);
-                    }
-                    var item = new CacheProxy<TKey, TValue>()
-                    {
-                        Timeout = Timeout,
-                        Key = key,
-                        GetValueCallBack = () => new CacheValue<TValue>()
-                        {
-                            Value = ValueBuilder.GetValue(default, key),
-                            Cached = DateTimeOffset.Now,
-                        },
-                    };
-                    if (HasTimeout)
-                    {
-                        item.TimedOutCallBack = () => Remove(key);
-                    }
-                    CacheProxies.Add(item);
-                    item.GetValue();
-                    return item;
+                        Value = value,
+                        Cached = DateTimeOffset.Now,
+                    });
+                    return proxy;
                 }
             }
         }
@@ -90,27 +96,12 @@ namespace MSyics.Cacheyi
                 if (CacheProxies.Contains(key)) { return CacheProxies[key]; }
                 using (LockSlim.Scope(LockStatus.Write))
                 {
-                    if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
+                    var proxy = AddCachProxy(key, () => new CacheValue<TValue>()
                     {
-                        // 最大容量を超えるときは、最初の要素を削除します。
-                        CacheProxies.RemoveAt(0);
-                    }
-                    var item = new CacheProxy<TKey, TValue>()
-                    {
-                        Timeout = Timeout,
-                        Key = key,
-                        GetValueCallBack = () => new CacheValue<TValue>()
-                        {
-                            Value = ValueBuilder.GetValue(keyed, key),
-                            Cached = DateTimeOffset.Now,
-                        },
-                    };
-                    if (HasTimeout)
-                    {
-                        item.TimedOutCallBack = () => Remove(key);
-                    }
-                    CacheProxies.Add(item);
-                    return item;
+                        Value = ValueBuilder.GetValue(keyed, key),
+                        Cached = DateTimeOffset.Now,
+                    });
+                    return proxy;
                 }
             }
         }
@@ -336,7 +327,7 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="key">要素のキー</param>
         /// <param name="value">登録する要素</param>
-        public CacheProxy<TKey, TValue> Add(TKey key, TValue value) => Internal.Add(key, value);
+        public CacheProxy<TKey, TValue> Alloc(TKey key, TValue value) => Internal.Alloc(key, value);
     }
 
     /// <summary>
@@ -437,8 +428,8 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 指定した要素を登録します。
         /// </summary>
-        /// <param name="key">要素のキー</param>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="value">登録する要素</param>
-        public CacheProxy<TKey, TValue> Add(TKey key, TValue value) => Internal.Add(key, value);
+        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value) => Internal.Alloc(keyed, value);
     }
 }

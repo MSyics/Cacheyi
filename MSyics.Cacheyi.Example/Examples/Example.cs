@@ -35,16 +35,11 @@ namespace MSyics.Cacheyi.Examples
             Traceable.Shutdown();
         }
 
-        public async Task ShowAsync()
+        public Task ShowAsync()
         {
-            var scope = Tracer.Scope();
-            try
+            using (Tracer.Scope())
             {
-                await ShowCoreAsync();
-            }
-            finally
-            {
-                scope.Dispose();
+                return ShowCoreAsync();
             }
         }
     }

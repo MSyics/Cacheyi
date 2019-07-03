@@ -12,30 +12,56 @@ namespace MSyics.Cacheyi.Examples
         public override async Task ShowCoreAsync()
         {
             var cache = new AddCacheCenter();
-            var proxy = cache.Elements.Alloc(1);
-            Console.WriteLine(proxy.GetValue());
 
-            await Task.Delay(2000);
+            var key = 1;
+            {
+                // Alloc DateTime
+                cache.DateTimes.Alloc(key);
+                Tracer.Information(cache.DateTimes.Alloc(key).GetValue());
+                await Task.Delay(1000);
+                Tracer.Information(cache.DateTimes.Alloc(key).GetValue());
+            }
+            {
+                // Overwrite DateTime
+                cache.DateTimes.Alloc(key, DateTime.MinValue);
+                Tracer.Information(cache.DateTimes.Alloc(key).GetValue());
+                await Task.Delay(1000);
+                Tracer.Information(cache.DateTimes.Alloc(key).GetValue());
+            }
 
-            proxy = cache.Elements.Add(1, DateTime.Now);
-            Console.WriteLine(proxy.GetValue());
+            var keyed = (1, "hogehoge");
+            {
+                // Alloc Message
+                var p = cache.Messages.Alloc(keyed);
+                Tracer.Information(cache.Messages.Alloc(keyed).GetValue());
+                await Task.Delay(1000);
+                Tracer.Information(cache.Messages.Alloc(keyed).GetValue());
+            }
+            {
+                // Overwrite Message
+                cache.Messages.Alloc(keyed, "piyopiyo");
+                Tracer.Information(cache.Messages.Alloc(keyed).GetValue());
+                await Task.Delay(1000);
+                Tracer.Information(cache.Messages.Alloc(keyed).GetValue());
+                Tracer.Information(cache.Messages.Alloc(keyed).Reset().GetValue());
 
-            proxy.Reset();
-            Console.WriteLine(proxy.GetValue());
-
-
-            await Task.CompletedTask;
+            }
         }
     }
 
     class AddCacheCenter : CacheCenter
     {
-        public CacheStore<int, DateTime> Elements { get; set; }
+        public CacheStore<int, DateTime> DateTimes { get; set; }
+        public CacheStore<(int id, string message), int, string> Messages { get; set; }
 
         protected override void ConstructStore(CacheStoreDirector director)
         {
-            director.Build(() => Elements)
+            director.Build(() => DateTimes)
                     .GetValue(id => DateTime.Now);
+
+            director.Build(() => Messages)
+                    .GetKey(x => x.id)
+                    .GetValue((x, key) => x.message);
         }
     }
 }

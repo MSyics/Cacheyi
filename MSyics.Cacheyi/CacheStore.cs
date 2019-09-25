@@ -1,12 +1,8 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
+﻿using MSyics.Cacheyi.Monitoring;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using MSyics.Cacheyi.Monitoring;
 using System.Threading;
 
 namespace MSyics.Cacheyi
@@ -32,6 +28,8 @@ namespace MSyics.Cacheyi
         void Remove(IEnumerable<TKeyed> keyeds);
 
         CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
+
+        IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable();
     }
 
     internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -39,8 +37,8 @@ namespace MSyics.Cacheyi
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
 
-        private ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
-        private CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
+        private readonly ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
+        private readonly CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
 
         ~InternalCacheStore()
         {
@@ -216,6 +214,20 @@ namespace MSyics.Cacheyi
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
+        {
+            using (LockSlim.Scope(LockStatus.Read))
+            {
+                foreach (var cache in CacheProxies)
+                {
+                    yield return cache;
+                }
+            }
+        }
+
         public int Count => CacheProxies.Count;
         public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
         public bool CanMonitoring => Monitoring != null;
@@ -274,7 +286,6 @@ namespace MSyics.Cacheyi
         /// </summary>
         public int Count => Internal.Count;
 
-
         /// <summary>
         /// 保持している要素すべて削除します。
         /// </summary>
@@ -328,6 +339,14 @@ namespace MSyics.Cacheyi
         /// <param name="key">要素のキー</param>
         /// <param name="value">登録する要素</param>
         public CacheProxy<TKey, TValue> Alloc(TKey key, TValue value) => Internal.Alloc(key, value);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
+        {
+            return Internal.AsEnumerable();
+        }
     }
 
     /// <summary>
@@ -376,7 +395,6 @@ namespace MSyics.Cacheyi
         /// 要素の保持数を取得します。
         /// </summary>
         public int Count => Internal.Count;
-
 
         /// <summary>
         /// 保持している要素すべて削除します。
@@ -431,5 +449,13 @@ namespace MSyics.Cacheyi
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="value">登録する要素</param>
         public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value) => Internal.Alloc(keyed, value);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
+        {
+            return Internal.AsEnumerable();
+        }
     }
 }

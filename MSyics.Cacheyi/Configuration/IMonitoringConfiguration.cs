@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using MSyics.Cacheyi.Monitoring;
+﻿using MSyics.Cacheyi.Monitoring;
 
 namespace MSyics.Cacheyi.Configuration
 {

@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-namespace MSyics.Cacheyi.Monitoring
+﻿namespace MSyics.Cacheyi.Monitoring
 {
     /// <summary>
     /// データソースに変更があったときの CacheStore への要求を表します。
@@ -14,7 +9,7 @@ namespace MSyics.Cacheyi.Monitoring
         /// 何もしません。
         /// </summary>
         None,
-        
+
         /// <summary>
         /// すべてリセットします。
         /// </summary>
@@ -34,5 +29,5 @@ namespace MSyics.Cacheyi.Monitoring
         /// 変更箇所を削除します。
         /// </summary>
         Remove,
-     }
+    }
 }

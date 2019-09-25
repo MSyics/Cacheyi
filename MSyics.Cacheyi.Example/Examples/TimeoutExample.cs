@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi.Examples
@@ -10,62 +10,49 @@ namespace MSyics.Cacheyi.Examples
     {
         public override string Name => nameof(TimeoutExample);
 
-        public override async Task ShowCoreAsync()
+        public override void ShowCore()
         {
-            var cache = new TimeoutCacheCenter();
-
-            Tracer.Information("hogehoge");
-
-            await Task.WhenAll(
-                Enumerable
-                .Range(0, 9)
-                .Select(i =>
-                {
-                    return Task.Run(() =>
-                    {
-                        cache
-                        .TimeoutElements
-                        .Alloc(Enumerable.Range(i * 1000, 1000 - 1))
-                        .ToList()
-                        .ForEach(x => x.GetValue());
-                    });
-                }).ToArray());
-
-
-            Tracer.Information("hogehoge");
-
-
-            await Task.Run(async () =>
+            var cache = new HogeCacheCenter();
             {
-                while (cache.TimeoutElements.Count > 0)
-                {
-                    await Task.Delay(333);
-                    Tracer.Information(cache.TimeoutElements.Count);
-                }
-            });
-
+                var proxy = cache.HogeStore.Alloc(1);
+                Tracer.Information(proxy.GetValue().Message);
+            }
+            {
+                Thread.Sleep(100);
+                var proxy = cache.HogeStore.Alloc(1);
+                Tracer.Information(proxy.GetValue().Message);
+            }
+            {
+                Thread.Sleep(200);
+                var proxy = cache.HogeStore.Alloc(1);
+                Tracer.Information(proxy.GetValue().Message);
+            }
         }
-    }
 
-    public class TimeoutCacheCenter : CacheCenter
-    {
-        public CacheStore<int, TimeoutElement> TimeoutElements { get; private set; }
-
-        protected override void ConstructStore(CacheStoreDirector director)
+        public class HogeCacheCenter : CacheCenter
         {
-            director.Build(() => TimeoutElements)
-                    .Settings(settings =>
-                    {
-                        //settings.MaxCapacity = 100;
-                        settings.Timeout = new TimeSpan(0, 0, 1);
-                    })
-                    .GetValue((key) => new TimeoutElement { Id = key, Message = $"{DateTime.Now:ffff}" });
-        }
-    }
+            public CacheStore<int, Hoge> HogeStore { get; private set; }
 
-    public class TimeoutElement
-    {
-        public int Id { get; set; }
-        public string Message { get; set; }
+            protected override void ConstructStore(CacheStoreDirector director)
+            {
+                director.Build(() => HogeStore)
+                        .Settings(settings =>
+                        {
+                            settings.MaxCapacity = 100;
+                            settings.Timeout = TimeSpan.FromMilliseconds(200);
+                        })
+                        .GetValue(key => new Hoge
+                        {
+                            Id = key,
+                            Message = $"{DateTime.Now:ffff}",
+                        });
+            }
+        }
+
+        public class Hoge
+        {
+            public int Id { get; set; }
+            public string Message { get; set; }
+        }
     }
 }

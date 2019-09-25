@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -29,13 +24,14 @@ namespace MSyics.Cacheyi
             // $center = $x
             yield return Expression.Assign(ParaCenter, Expression.Convert(ParaX, center));
             // $center.[store] = (StoreType)object;
-            var properties = center.GetTypeInfo()
-                                   .DeclaredProperties
-                                   .Where(x =>
-                                   {
-                                       var type = x.PropertyType.GetGenericTypeDefinition();
-                                       return type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
-                                   });
+            var properties = center.
+                GetTypeInfo().
+                DeclaredProperties.
+                Where(x =>
+                {
+                    var type = x.PropertyType.GetGenericTypeDefinition();
+                    return type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
+                });
 
             var context = new CacheContext();
             foreach (var item in properties)

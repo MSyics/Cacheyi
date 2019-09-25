@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-namespace MSyics.Cacheyi
+﻿namespace MSyics.Cacheyi
 {
     /// <summary>
     /// 要素の保持状態を表します。

@@ -1,29 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi.Examples
 {
-    class SetupExample : Example
+    class DoOutExample : Example
     {
-        public override string Name => nameof(SetupExample);
+        public override string Name => nameof(DoOutExample);
 
         public override void ShowCore()
         {
             var cache = new HogeCacheCenter();
+
+            foreach (var item in Enumerable.Range(1, 10000))
             {
-                var proxy = cache.HogeStore.Alloc(1);
-                Tracer.Information(proxy.GetValue().Message);
+                var proxy = cache.HogeStore.Alloc(item);
+                proxy.GetValue();
             }
-            {
-                var proxy = cache.HogeStore.Alloc(2);
-                Tracer.Information(proxy.GetValue().Message);
-            }
-            {
-                var proxy = cache.HogeStore.Alloc(1);
-                Tracer.Information(proxy.GetValue().Message);
-            }
+
+            Tracer.Information(cache.HogeStore.Count);
+            cache.HogeStore.Reset();
+            cache.HogeStore.DoOut();
+            Tracer.Information(cache.HogeStore.Count);
         }
 
         public class HogeCacheCenter : CacheCenter
@@ -35,7 +36,8 @@ namespace MSyics.Cacheyi.Examples
                 director.Build(() => HogeStore)
                         .Settings(settings =>
                         {
-                            settings.MaxCapacity = 100;
+                            settings.MaxCapacity = int.MaxValue;
+                            //settings.Timeout = TimeSpan.FromMilliseconds(2000);
                         })
                         .GetValue(key => new Hoge
                         {

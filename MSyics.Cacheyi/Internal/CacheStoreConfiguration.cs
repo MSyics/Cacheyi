@@ -1,15 +1,13 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using MSyics.Cacheyi.Configuration;
+﻿using MSyics.Cacheyi.Configuration;
 using MSyics.Cacheyi.Monitoring;
 using System;
 
 namespace MSyics.Cacheyi
 {
-    internal sealed class CacheStoreConfiguration<TKey, TValue> : ICacheStoreConfiguration<TKey, TValue>, IMonitoringConfiguration<TKey, TValue>, ICacheValueConfiguration<TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKey, TValue> : 
+        ICacheStoreConfiguration<TKey, TValue>, 
+        IMonitoringConfiguration<TKey, TValue>, 
+        ICacheValueConfiguration<TKey, TValue>
     {
         private readonly CacheStore<TKey, TValue> Store;
 
@@ -45,7 +43,11 @@ namespace MSyics.Cacheyi
         }
     }
 
-    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : ICacheStoreConfiguration<TKeyed, TKey, TValue>, IMonitoringConfiguration<TKeyed, TKey, TValue>, ICacheKeyConfiguration<TKeyed, TKey, TValue>, ICacheValueConfiguration<TKeyed, TKey, TValue>
+    internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> : 
+        ICacheStoreConfiguration<TKeyed, TKey, TValue>, 
+        IMonitoringConfiguration<TKeyed, TKey, TValue>, 
+        ICacheKeyConfiguration<TKeyed, TKey, TValue>, 
+        ICacheValueConfiguration<TKeyed, TKey, TValue>
     {
         private CacheStore<TKeyed, TKey, TValue> Store;
 

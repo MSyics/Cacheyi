@@ -6,14 +6,16 @@ namespace MSyics.Cacheyi.Examples
 {
     class Program : ExampleAggregator
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            await new Program()
-                //.Add<SetupExample>()
-                //.Add<TimeoutExample>()
-                .Add<AddExample>()
-
-                .ShowAsync();
+            new Program().
+                //Add<SetupExample>().
+                Add<TimeoutExample>().
+                //Add<ManualAllocExample>().
+                Add<DoOutExample>().
+                Add<HogeExample>().
+                
+                Show();
         }
     }
 }

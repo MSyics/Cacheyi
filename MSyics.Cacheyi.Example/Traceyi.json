@@ -2,6 +2,7 @@
   "Traceyi": {
     "Tracer": [
       {
+        "UseMemberInfo": false,
         "Listeners": [ "console" ]
       }
     ],
@@ -9,13 +10,11 @@
       "Console": [
         {
           "Name": "console",
-          "UseLock": true  ,
-          "UseAsync": true
-        }
-      ],
-      "File": [
-        {
-          "Name": "file"
+          "UseLock": true,
+          "UseAsync": false,
+          "Layout": {
+            "Format": "{operationId} {action|,10:L}{message}"
+          }
         }
       ]
     }

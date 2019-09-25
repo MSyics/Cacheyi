@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using System;
+﻿using System;
 using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi
@@ -15,7 +10,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">保持要素の型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
-        private object LockObj = new object();
+        private readonly object LockObj = new object();
 
         internal CacheProxy() { }
 

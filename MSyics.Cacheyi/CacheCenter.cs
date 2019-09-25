@@ -1,10 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-
-namespace MSyics.Cacheyi
+﻿namespace MSyics.Cacheyi
 {
     /// <summary>
     /// キャッシュの実装を提供します。これは抽象クラスです。

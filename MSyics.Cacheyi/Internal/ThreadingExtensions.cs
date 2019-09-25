@@ -1,11 +1,6 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using System;
-using System.Threading.Tasks;
+﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi
 {

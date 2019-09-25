@@ -1,9 +1,4 @@
-﻿/****************************************************************
-© 2018 MSyics
-This software is released under the MIT License.
-http://opensource.org/licenses/mit-license.php
-****************************************************************/
-using MSyics.Cacheyi.Configuration;
+﻿using MSyics.Cacheyi.Configuration;
 using System;
 using System.Linq.Expressions;
 

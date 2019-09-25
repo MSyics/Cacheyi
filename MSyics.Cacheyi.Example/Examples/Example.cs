@@ -27,20 +27,16 @@ namespace MSyics.Cacheyi.Examples
             }
         }
 
-        public virtual void ShowCore() { }
-        public virtual Task ShowCoreAsync() => Task.CompletedTask;
+        public abstract void ShowCore();
 
         public virtual void Teardown()
         {
             Traceable.Shutdown();
         }
 
-        public Task ShowAsync()
+        Task IExample.ShowAsync()
         {
-            using (Tracer.Scope())
-            {
-                return ShowCoreAsync();
-            }
+            return Task.CompletedTask;
         }
     }
 }

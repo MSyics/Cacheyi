@@ -10,10 +10,10 @@ namespace MSyics.Cacheyi.Examples
         {
             new Program().
                 //Add<SetupExample>().
-                Add<TimeoutExample>().
+                //Add<TimeoutExample>().
                 //Add<ManualAllocExample>().
-                Add<DoOutExample>().
-                Add<HogeExample>().
+                //Add<DoOutExample>().
+                Add<DataSourceMonitoringExample>().
                 
                 Show();
         }

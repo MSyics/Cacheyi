@@ -5,7 +5,7 @@ namespace MSyics.Cacheyi
 {
     internal class CacheStoreCollection
     {
-        private ConcurrentDictionary<string, object> Stores = new ConcurrentDictionary<string, object>();
+        private readonly ConcurrentDictionary<string, object> Stores = new ConcurrentDictionary<string, object>();
 
         public CacheStore<TKey, TValue> Add<TKey, TValue>(string name) => (CacheStore<TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKey, TValue>());
         public CacheStore<TKeyed, TKey, TValue> Add<TKeyed, TKey, TValue>(string name) => (CacheStore<TKeyed, TKey, TValue>)Stores.GetOrAdd(name, new CacheStore<TKeyed, TKey, TValue>());

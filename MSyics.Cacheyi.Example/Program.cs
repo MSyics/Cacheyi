@@ -9,11 +9,12 @@ namespace MSyics.Cacheyi.Examples
         static void Main(string[] args)
         {
             new Program().
-                //Add<SetupExample>().
+                Add<SetupExample>().
                 //Add<TimeoutExample>().
                 //Add<ManualAllocExample>().
                 //Add<DoOutExample>().
-                Add<DataSourceMonitoringExample>().
+                //Add<DataSourceMonitoringExample>().
+                Add<CacheStorePropertyExample>().
                 
                 Show();
         }

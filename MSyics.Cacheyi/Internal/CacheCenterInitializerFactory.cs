@@ -8,14 +8,14 @@ namespace MSyics.Cacheyi
 {
     internal class CacheCenterInitializerFactory
     {
-        private ParameterExpression ParaX = Expression.Parameter(typeof(CacheCenter), "x");
+        private readonly ParameterExpression ParaX = Expression.Parameter(typeof(object), "x");
         private ParameterExpression ParaCenter;
 
-        public Action<CacheCenter> Create(Type center)
+        public Action<object> Create(Type center)
         {
             ParaCenter = Expression.Parameter(center, "center");
             var body = Expression.Block(new[] { ParaCenter }, GetExpressions(center));
-            var lamda = Expression.Lambda<Action<CacheCenter>>(body, ParaX);
+            var lamda = Expression.Lambda<Action<object>>(body, ParaX);
             return lamda.Compile();
         }
 
@@ -29,8 +29,9 @@ namespace MSyics.Cacheyi
                 DeclaredProperties.
                 Where(x =>
                 {
+                    if (!x.PropertyType.IsGenericType) return false;
                     var type = x.PropertyType.GetGenericTypeDefinition();
-                    return type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
+                    return type.Equals(typeof(ICacheStore<,>)) || type.Equals(typeof(ICacheStore<,,>)) || type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
                 });
 
             var context = new CacheContext();

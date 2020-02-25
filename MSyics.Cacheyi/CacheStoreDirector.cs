@@ -18,7 +18,7 @@ namespace MSyics.Cacheyi
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
-        public ICacheStoreConfiguration<TKey, TValue> Build<TKey, TValue>(Expression<Func<CacheStore<TKey, TValue>>> property) =>
+        public ICacheStoreConfiguration<TKey, TValue> Build<TKey, TValue>(Expression<Func<ICacheStore<TKey, TValue>>> property) =>
             new CacheStoreConfiguration<TKey, TValue>(GetStoreName((MemberExpression)property.Body));
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace MSyics.Cacheyi
         /// <typeparam name="TKey">キーの型</typeparam>
         /// <typeparam name="TValue">要素の型</typeparam>
         /// <param name="property">CacheStore 型のプロパティ</param>
-        public ICacheStoreConfiguration<TKeyed, TKey, TValue> Build<TKeyed, TKey, TValue>(Expression<Func<CacheStore<TKeyed, TKey, TValue>>> property) =>
+        public ICacheStoreConfiguration<TKeyed, TKey, TValue> Build<TKeyed, TKey, TValue>(Expression<Func<ICacheStore<TKeyed, TKey, TValue>>> property) =>
             new CacheStoreConfiguration<TKeyed, TKey, TValue>(GetStoreName((MemberExpression)property.Body));
     }
 }

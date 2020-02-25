@@ -7,29 +7,116 @@ using System.Threading;
 
 namespace MSyics.Cacheyi
 {
-    internal interface ICacheStore<TKeyed, TKey, TValue>
+    /// <summary>
+    /// 要素を保持します。
+    /// </summary>
+    /// <typeparam name="TKeyed">要素のキーを保有する型</typeparam>
+    /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
+    /// <typeparam name="TValue">要素の型</typeparam>
+    public interface ICacheStore<TKeyed, TKey, TValue>
     {
+        /// <summary>
+        /// 要素の最大保持量を取得します。
+        /// </summary>
         int MaxCapacity { get; }
+
+        /// <summary>
+        /// /最大保持量を持っているかどうかを示す値を取得します。
+        /// </summary>
         bool HasMaxCapacity { get; }
+
+        /// <summary>
+        /// 要素の保持期間を取得します。
+        /// </summary>
         TimeSpan Timeout { get; }
+
+        /// <summary>
+        /// 保持期間を持っているかどうかを示す値を取得します。
+        /// </summary>
         bool HasTimeout { get; }
+
+        /// <summary>
+        /// データソース監視オブジェクトを取得します。
+        /// </summary>
         IDataSourceMonitoring<TKey> Monitoring { get; }
+
+        /// <summary>
+        /// データソース監視ができるかどうかを示す値を取得します。
+        /// </summary>
         bool CanMonitoring { get; }
+
+        /// <summary>
+        /// 要素の保持数を取得します。
+        /// </summary>
         int Count { get; }
 
+        /// <summary>
+        /// 保持している要素すべて削除します。
+        /// </summary>
         void Clear();
+
+        /// <summary>
+        /// <para>保持している要素を圧縮して整理します。</para>
+        /// <para>この操作は、実要素を保持していない要素を削除します。</para>
+        /// </summary>
         void DoOut();
+
+        /// <summary>
+        /// すべての要素をリセットします。
+        /// </summary>
         void Reset();
 
+        /// <summary>
+        /// 指定したオブジェクトから要素を引き当てます。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
         CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
+
+        /// <summary>
+        /// 指定したオブジェクトの一覧から要素を引き当てます。
+        /// </summary>
+        /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
         IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
+
+        /// <summary>
+        /// 指定したオブジェクトで要素の引当を試みます。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        /// <param name="cache">要素</param>
         bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+
+        /// <summary>
+        /// 指定したオブジェクトで要素を削除します。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
         bool Remove(TKeyed keyed);
+
+        /// <summary>
+        /// 指定したオブジェクトの一覧から要素を削除します。
+        /// </summary>
+        /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
         void Remove(IEnumerable<TKeyed> keyeds);
 
+        /// <summary>
+        /// 指定した要素を登録します。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        /// <param name="value">登録する要素</param>
         CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
 
+        /// <summary>
+        /// 
+        /// </summary>
         IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable();
+    }
+
+    /// <summary>
+    /// 要素を保持します。
+    /// </summary>
+    /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
+    /// <typeparam name="TValue">要素の型</typeparam>
+    public interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
+    {
     }
 
     internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -242,7 +329,7 @@ namespace MSyics.Cacheyi
     /// </summary>
     /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
     /// <typeparam name="TValue">要素の型</typeparam>
-    public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
+    public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     {
         internal InternalCacheStore<TKey, TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TKey, TValue>();
 

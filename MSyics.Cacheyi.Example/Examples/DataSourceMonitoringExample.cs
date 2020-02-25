@@ -19,7 +19,7 @@ namespace MSyics.Cacheyi.Examples
         {
             var cache = new HogeCacheCenter();
             cache.HogeStore.Monitoring.Start();
-
+            
             File.WriteAllLines(FilePath, Enumerable.Range(1, 100).Select(i => i.ToString()));
             {
                 var proxy = cache.HogeStore.Alloc(50);

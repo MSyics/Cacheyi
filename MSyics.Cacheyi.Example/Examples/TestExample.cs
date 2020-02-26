@@ -12,35 +12,42 @@ namespace MSyics.Cacheyi.Examples
 
         public override void ShowCore()
         {
+            for (int i = 0; i < 50; i++)
             {
-                var cache = new HogeHoge();
-                {
-                    var proxy = cache.HogeStore.Alloc(1, new Hoge { Id = 1, Message = "hogehoge" });
-                    Tracer.Information(proxy.Status);
-                    Tracer.Information(proxy.GetValue().Message);
-                }
-                {
-                    var proxy = cache.HogeStore.Alloc(1);
-                    Tracer.Information(proxy.Status);
-                    Tracer.Information(proxy.GetValue().Message);
-                }
-                {
-                    cache.HogeStore.Alloc(1, new Hoge { Id = 1, Message = "piyopiyo" });
-                }
-                {
-                    var proxy = cache.HogeStore.Alloc(1);
-                    Tracer.Information(proxy.Status);
-                    Tracer.Information(proxy.GetValue().Message);
-                }
+                Task.WhenAll(
+                    AddCache(),
+                    ReadCache()
+                    ).Wait();
             }
+        }
+
+        public async Task AddCache()
+        {
+            var cache = new HogeHoge();
+            await Task.Delay(1);
+            for (int i = 0; i < 100; i++)
             {
-                var cache = new HogeHoge();
-                {
-                    var proxy = cache.HogeStore.Alloc(1);
-                    Tracer.Information(proxy.Status);
-                    Tracer.Information(proxy.GetValue().Message);
-                }
+                //await Task.Delay(1);
+                await Task.Yield();
+                var p = cache.HogeStore.Alloc(i);
+                p.Reset();
+                //Tracer.Information(p.Key);
             }
+            Tracer.Information("end AddCache");
+        }
+
+        public async Task ReadCache()
+        {
+            var cache = new HogeHoge();
+            await Task.Delay(1);
+            //await Task.Yield();
+            foreach (var item in cache.HogeStore)
+            {
+                //await Task.Delay(1);
+                await Task.Yield();
+                Tracer.Information($"{item.Key} {item.GetValue().Message}");
+            }
+            Tracer.Information("end ReadCache");
         }
 
         public class HogeHoge
@@ -53,6 +60,7 @@ namespace MSyics.Cacheyi.Examples
                     Build(() => HogeStore).
                     GetValue(key =>
                     {
+                        Thread.Sleep(100);
                         return new Hoge
                         {
                             Id = key,
@@ -60,17 +68,6 @@ namespace MSyics.Cacheyi.Examples
                         };
                     });
                 });
-
-                HogeStore = new CacheStore<int, Hoge>(key =>
-                {
-                    return new Hoge
-                    {
-                        Id = key,
-                        Message = $"{DateTime.Now:ffff}",
-                    };
-                });
-
-               
             }
 
             public ICacheStore<int, Hoge> HogeStore { get; private set; }

@@ -34,9 +34,6 @@ namespace MSyics.Cacheyi.Examples
             Traceable.Shutdown();
         }
 
-        Task IExample.ShowAsync()
-        {
-            return Task.CompletedTask;
-        }
+        public virtual Task ShowAsync() { return Task.CompletedTask; }
     }
 }

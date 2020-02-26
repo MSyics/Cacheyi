@@ -6,18 +6,20 @@ namespace MSyics.Cacheyi.Examples
 {
     class Program : ExampleAggregator
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            new Program().
+            var p = new Program();
+            p.
                 Add<SetupExample>().
-                //Add<TimeoutExample>().
-                //Add<ManualAllocExample>().
-                //Add<DoOutExample>().
-                //Add<DataSourceMonitoringExample>().
-                //Add<CacheStorePropertyExample>().
-                Add<TestExample>().
+                Add<TimeoutExample>().
+                Add<ManualAllocExample>().
+                Add<DoOutExample>().
+                Add<DataSourceMonitoringExample>().
+                Add<CacheStorePropertyExample>().
+                Add<TestExample>();
 
-                Show();
+            //p.Show();
+            await p.ShowAsync();
         }
     }
 }

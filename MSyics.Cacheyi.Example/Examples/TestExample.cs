@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,42 +13,44 @@ namespace MSyics.Cacheyi.Examples
 
         public override void ShowCore()
         {
-            for (int i = 0; i < 50; i++)
+        }
+
+        public override async Task ShowAsync()
+        {
+            _ = Add();
+            for (int i = 0; i < 10; i++)
             {
-                Task.WhenAll(
-                    AddCache(),
-                    ReadCache()
-                    ).Wait();
+                await Read();
             }
         }
 
-        public async Task AddCache()
+        private Task Add()
         {
-            var cache = new HogeHoge();
-            await Task.Delay(1);
-            for (int i = 0; i < 100; i++)
+            return Task.Run(() =>
             {
-                //await Task.Delay(1);
-                await Task.Yield();
-                var p = cache.HogeStore.Alloc(i);
-                p.Reset();
-                //Tracer.Information(p.Key);
-            }
-            Tracer.Information("end AddCache");
+                for (int i = 0; i < int.MaxValue; i++)
+                {
+                    var c = new HogeHoge().HogeStore;
+                    foreach (var item in c.Alloc(Enumerable.Range(0, 3)))
+                    {
+                        item.Reset();
+                    }
+                }
+            });
         }
 
-        public async Task ReadCache()
+        private Task Read()
         {
-            var cache = new HogeHoge();
-            await Task.Delay(1);
-            //await Task.Yield();
-            foreach (var item in cache.HogeStore)
+            return Task.Run(() =>
             {
-                //await Task.Delay(1);
-                await Task.Yield();
-                Tracer.Information($"{item.Key} {item.GetValue().Message}");
-            }
-            Tracer.Information("end ReadCache");
+                var c = new HogeHoge();
+                Tracer.Information($"{c.HogeStore.Count}");
+                foreach (var item in c.HogeStore.Take(3))
+                {
+                    Tracer.Information($"{item.Key} {item.GetValue().Message}");
+                }
+                Tracer.Information($"end Read");
+            });
         }
 
         public class HogeHoge
@@ -60,7 +63,6 @@ namespace MSyics.Cacheyi.Examples
                     Build(() => HogeStore).
                     GetValue(key =>
                     {
-                        Thread.Sleep(100);
                         return new Hoge
                         {
                             Id = key,

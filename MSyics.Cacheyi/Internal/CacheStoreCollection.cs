@@ -15,5 +15,15 @@ namespace MSyics.Cacheyi
             if (!Stores.TryGetValue(name, out var store)) { throw new KeyNotFoundException(name); }
             return store;
         }
+
+        public CacheStore<TKey, TValue> GetValue<TKey, TValue>(string name)
+        {
+            return (CacheStore<TKey, TValue>)GetValue(name);
+        }
+
+        public CacheStore<TKeyed, TKey, TValue> GetValue<TKeyed, TKey, TValue>(string name)
+        {
+            return (CacheStore<TKeyed, TKey, TValue>)GetValue(name);
+        }
     }
 }

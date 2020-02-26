@@ -127,6 +127,24 @@ namespace MSyics.Cacheyi
         private readonly ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
         private readonly CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
 
+        internal InternalCacheStore() { }
+
+        internal InternalCacheStore(ICacheKeyBuilder<TKeyed, TKey> keyBuilder, ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder)
+        {
+            KeyBuilder = keyBuilder;
+            ValueBuilder = valueBuilder;
+        }
+
+        internal InternalCacheStore(ICacheKeyBuilder<TKeyed, TKey> keyBuilder, ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring) :
+            this(keyBuilder, valueBuilder)
+        {
+            Monitoring = monitoring;
+            if (Monitoring != null)
+            {
+                Monitoring.Changed += OnDataSourceChanged;
+            }
+        }
+
         ~InternalCacheStore()
         {
             if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
@@ -331,11 +349,47 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">要素の型</typeparam>
     public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     {
-        internal InternalCacheStore<TKey, TKey, TValue> Internal { get; } = new InternalCacheStore<TKey, TKey, TValue>();
+        internal InternalCacheStore<TKey, TKey, TValue> Internal { get; }
 
         internal CacheStore()
         {
-            Internal.KeyBuilder = new FuncCacheKeyFactory<TKey, TKey>() { Build = key => key };
+            Internal = new InternalCacheStore<TKey, TKey, TValue>
+            {
+                KeyBuilder = new FuncCacheKeyFactory<TKey, TKey>() { Build = key => key }
+            };
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public CacheStore(Func<TKey, TValue> valueBuilder)
+        {
+            Internal = new InternalCacheStore<TKey, TKey, TValue>(
+                new FuncCacheKeyFactory<TKey, TKey>
+                {
+                    Build = key => key
+                },
+                new FuncCacheValueBuilder<TKey, TKey, TValue>
+                {
+                    Build = (_, key) => valueBuilder(key)
+                });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public CacheStore(Func<TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring)
+        {
+            Internal = new InternalCacheStore<TKey, TKey, TValue>(
+                new FuncCacheKeyFactory<TKey, TKey>
+                {
+                    Build = key => key
+                },
+                new FuncCacheValueBuilder<TKey, TKey, TValue>
+                {
+                    Build = (_, key) => valueBuilder(key)
+                },
+                monitoring);
         }
 
         /// <summary>
@@ -444,9 +498,45 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">要素の型</typeparam>
     public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
     {
-        internal InternalCacheStore<TKeyed, TKey, TValue> Internal { get; } = new InternalCacheStore<TKeyed, TKey, TValue>();
+        internal InternalCacheStore<TKeyed, TKey, TValue> Internal { get; }
 
-        internal CacheStore() { }
+        internal CacheStore()
+        {
+            Internal = new InternalCacheStore<TKeyed, TKey, TValue>();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public CacheStore(Func<TKeyed, TKey> keyBuilde, Func<TKeyed, TKey, TValue> valueBuilder)
+        {
+            Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
+                new FuncCacheKeyFactory<TKeyed, TKey>
+                {
+                    Build = keyBuilde
+                },
+                new FuncCacheValueBuilder<TKeyed, TKey, TValue>
+                {
+                    Build = valueBuilder
+                });
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public CacheStore(Func<TKeyed, TKey> keyBuilde, Func<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring)
+        {
+            Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
+                new FuncCacheKeyFactory<TKeyed, TKey>
+                {
+                    Build = keyBuilde
+                },
+                new FuncCacheValueBuilder<TKeyed, TKey, TValue>
+                {
+                    Build = valueBuilder
+                },
+                monitoring);
+        }
 
         /// <summary>
         /// 要素の最大保持量を取得します。

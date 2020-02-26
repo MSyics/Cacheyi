@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 
 namespace MSyics.Cacheyi
 {
@@ -7,6 +8,9 @@ namespace MSyics.Cacheyi
     /// </summary>
     public abstract class CacheCenter
     {
+        internal static readonly ConcurrentDictionary<Type, Action<object>> centerInitializers = new ConcurrentDictionary<Type, Action<object>>();
+        internal static readonly CacheStoreCollection stores = new CacheStoreCollection();
+
         /// <summary>
         /// CacheCenter クラスのインスタンスを初期化します。
         /// </summary>
@@ -25,7 +29,7 @@ namespace MSyics.Cacheyi
         /// <param name="director">CacheStore を構築する処理</param>
         public static void ConstructStore(object obj, Action<CacheStoreDirector> director)
         {
-            var init = new CacheContext().CenterInitializers.GetOrAdd(obj.GetType(), type =>
+            var init = centerInitializers.GetOrAdd(obj.GetType(), type =>
             {
                 director?.Invoke(new CacheStoreDirector());
                 return new CacheCenterInitializerFactory().Create(type);

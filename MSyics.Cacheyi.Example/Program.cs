@@ -14,8 +14,9 @@ namespace MSyics.Cacheyi.Examples
                 //Add<ManualAllocExample>().
                 //Add<DoOutExample>().
                 //Add<DataSourceMonitoringExample>().
-                Add<CacheStorePropertyExample>().
-                
+                //Add<CacheStorePropertyExample>().
+                Add<TestExample>().
+
                 Show();
         }
     }

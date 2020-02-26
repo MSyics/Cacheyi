@@ -34,7 +34,6 @@ namespace MSyics.Cacheyi
                     return type.Equals(typeof(ICacheStore<,>)) || type.Equals(typeof(ICacheStore<,,>)) || type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
                 });
 
-            var context = new CacheContext();
             foreach (var item in properties)
             {
                 yield return
@@ -42,7 +41,7 @@ namespace MSyics.Cacheyi
                         Expression.Property(ParaCenter, item),
                         Expression.Convert(
                             Expression.Constant(
-                                context.Stores.GetValue($"{center.FullName}.{item.Name}"),
+                                CacheCenter.stores.GetValue($"{center.FullName}.{item.Name}"),
                                 typeof(object)),
                             item.PropertyType));
             }

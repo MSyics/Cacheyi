@@ -18,7 +18,7 @@ namespace MSyics.Cacheyi.Examples
         public override async Task ShowAsync()
         {
             _ = Add();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 await Read();
             }
@@ -26,16 +26,19 @@ namespace MSyics.Cacheyi.Examples
 
         private Task Add()
         {
+            var c = new HogeHoge().HogeStore;
             return Task.Run(() =>
             {
                 for (int i = 0; i < int.MaxValue; i++)
                 {
-                    var c = new HogeHoge().HogeStore;
-                    foreach (var item in c.Alloc(Enumerable.Range(0, 3)))
-                    {
-                        item.Reset();
-                    }
+                    c.Alloc(Enumerable.Range(0, 100));
+                    c.Clear();
+                    //foreach (var item in c.Alloc(Enumerable.Range(0, 3000)))
+                    //{
+                    //    item.Reset();
+                    //}
                 }
+                Tracer.Information($"end Add");
             });
         }
 
@@ -45,9 +48,10 @@ namespace MSyics.Cacheyi.Examples
             {
                 var c = new HogeHoge();
                 Tracer.Information($"{c.HogeStore.Count}");
-                foreach (var item in c.HogeStore.Take(3))
+                foreach (var item in c.HogeStore.AsEnumerable().Take(1000))
                 {
-                    Tracer.Information($"{item.Key} {item.GetValue().Message}");
+                    item.GetValue();
+                    //Tracer.Information($"{item.Key} {item.GetValue().Message}");
                 }
                 Tracer.Information($"end Read");
             });

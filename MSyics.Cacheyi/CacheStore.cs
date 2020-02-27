@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 
@@ -13,7 +14,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TKeyed">要素のキーを保有する型</typeparam>
     /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
     /// <typeparam name="TValue">要素の型</typeparam>
-    public interface ICacheStore<TKeyed, TKey, TValue> : IEnumerable<CacheProxy<TKey, TValue>>
+    public interface ICacheStore<TKeyed, TKey, TValue>
     {
         /// <summary>
         /// 要素の最大保持量を取得します。
@@ -46,6 +47,11 @@ namespace MSyics.Cacheyi
         bool CanMonitoring { get; }
 
         /// <summary>
+        /// 要素の一覧を取得します。
+        /// </summary>
+        IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable();
+
+        /// <summary>
         /// 要素の保持数を取得します。
         /// </summary>
         int Count { get; }
@@ -76,7 +82,14 @@ namespace MSyics.Cacheyi
         /// 指定したオブジェクトの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-        IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds);
+        CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds);
+
+        /// <summary>
+        /// 指定した要素を登録します。
+        /// </summary>
+        /// <param name="keyed">キーを保有するオブジェクト</param>
+        /// <param name="value">登録する要素</param>
+        CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
 
         /// <summary>
         /// 指定したオブジェクトで要素の引当を試みます。
@@ -96,13 +109,6 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
         void Remove(IEnumerable<TKeyed> keyeds);
-
-        /// <summary>
-        /// 指定した要素を登録します。
-        /// </summary>
-        /// <param name="keyed">キーを保有するオブジェクト</param>
-        /// <param name="value">登録する要素</param>
-        CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
     }
 
     /// <summary>
@@ -122,7 +128,7 @@ namespace MSyics.Cacheyi
         /// 指定したキーの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keys">キーの一覧</param>
-        new IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys);
+        new CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKey> keys);
 
         /// <summary>
         /// 指定したキーで要素の引当を試みます。
@@ -159,7 +165,9 @@ namespace MSyics.Cacheyi
         private readonly ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
         private readonly CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
 
-        internal InternalCacheStore() { }
+        internal InternalCacheStore()
+        {
+        }
 
         internal InternalCacheStore(ICacheKeyBuilder<TKeyed, TKey> keyBuilder, ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder)
         {
@@ -241,10 +249,20 @@ namespace MSyics.Cacheyi
             }
         }
 
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds)
+        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds)
         {
-            if (keyeds == null) { yield break; }
-            foreach (var item in keyeds) { yield return Alloc(item); }
+            if (keyeds == null)
+            {
+                return Enumerable.
+                    Empty<CacheProxy<TKey, TValue>>().
+                    ToArray();
+            }
+            else
+            {
+                return keyeds.
+                    Select(x => Alloc(x)).
+                    ToArray();
+            }
         }
 
         public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
@@ -351,17 +369,15 @@ namespace MSyics.Cacheyi
             }
         }
 
-        public IEnumerator<CacheProxy<TKey, TValue>> GetEnumerator()
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
         {
-            foreach (var cache in CacheProxies.ToArray())
+            using (LockSlim.Scope(LockStatus.Read))
             {
-                yield return cache;
+                foreach (var cache in CacheProxies)
+                {
+                    yield return cache;
+                }
             }
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
         }
 
         public int Count => CacheProxies.Count;
@@ -454,6 +470,11 @@ namespace MSyics.Cacheyi
         public bool CanMonitoring => Internal.CanMonitoring;
 
         /// <summary>
+        /// 要素の一覧を取得します。
+        /// </summary>
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
+
+        /// <summary>
         /// 要素の保持数を取得します。
         /// </summary>
         public int Count => Internal.Count;
@@ -484,7 +505,7 @@ namespace MSyics.Cacheyi
         /// 指定したキーの一覧に一致する要素を引き当てます。
         /// </summary>
         /// <param name="keys">キーの一覧</param>
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
 
         /// <summary>
         /// 指定したキーで要素の引当を試みます。
@@ -512,12 +533,6 @@ namespace MSyics.Cacheyi
         /// <param name="value">登録する要素</param>
         public CacheProxy<TKey, TValue> Alloc(TKey key, TValue value) => Internal.Alloc(key, value);
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public IEnumerator<CacheProxy<TKey, TValue>> GetEnumerator() => Internal.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => Internal.GetEnumerator();
     }
 
     /// <summary>
@@ -599,6 +614,11 @@ namespace MSyics.Cacheyi
         public bool CanMonitoring => Internal.CanMonitoring;
 
         /// <summary>
+        /// 要素の一覧を取得します。
+        /// </summary>
+        public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
+
+        /// <summary>
         /// 要素の保持数を取得します。
         /// </summary>
         public int Count => Internal.Count;
@@ -629,7 +649,7 @@ namespace MSyics.Cacheyi
         /// 指定したオブジェクトの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-        public IEnumerable<CacheProxy<TKey, TValue>> Alloc(IEnumerable<TKeyed> keyeds) => Internal.Alloc(keyeds);
+        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds) => Internal.Alloc(keyeds);
 
         /// <summary>
         /// 指定したオブジェクトで要素の引当を試みます。
@@ -656,12 +676,5 @@ namespace MSyics.Cacheyi
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="value">登録する要素</param>
         public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value) => Internal.Alloc(keyed, value);
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public IEnumerator<CacheProxy<TKey, TValue>> GetEnumerator() => Internal.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => Internal.GetEnumerator();
     }
 }

@@ -373,10 +373,7 @@ namespace MSyics.Cacheyi
         {
             using (LockSlim.Scope(LockStatus.Read))
             {
-                foreach (var cache in CacheProxies)
-                {
-                    yield return cache;
-                }
+                return CacheProxies.ToArray();
             }
         }
 

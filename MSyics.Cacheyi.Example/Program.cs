@@ -10,12 +10,12 @@ namespace MSyics.Cacheyi.Examples
         {
             var p = new Program();
             p.
-                Add<SetupExample>().
-                Add<TimeoutExample>().
-                Add<ManualAllocExample>().
-                Add<DoOutExample>().
-                Add<DataSourceMonitoringExample>().
-                Add<CacheStorePropertyExample>().
+                //Add<SetupExample>().
+                //Add<TimeoutExample>().
+                //Add<ManualAllocExample>().
+                //Add<DoOutExample>().
+                //Add<DataSourceMonitoringExample>().
+                //Add<CacheStorePropertyExample>().
                 Add<TestExample>();
 
             //p.Show();

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MSyics.Traceyi;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,23 +18,31 @@ namespace MSyics.Cacheyi.Examples
 
         public override async Task ShowAsync()
         {
-            _ = Add();
-            for (int i = 0; i < 10000; i++)
+            using (Tracer.Scope())
             {
-                await Read();
+                //await Add(1, 100);
+                for (int i = 0; i < 5; i++)
+                {
+                    _ = Add(int.MaxValue, 100);
+                }
+                for (int i = 0; i < 1000; i++)
+                {
+                    await Task.Delay(10);
+                    Read();
+                }
             }
         }
 
-        private Task Add()
+        private Task Add(int repeat, int count)
         {
             var c = new HogeHoge().HogeStore;
             return Task.Run(() =>
             {
-                for (int i = 0; i < int.MaxValue; i++)
+                for (int i = 0; i < repeat; i++)
                 {
-                    c.Alloc(Enumerable.Range(0, 100));
+                    c.Alloc(Enumerable.Range(0, count));
                     c.Clear();
-                    //foreach (var item in c.Alloc(Enumerable.Range(0, 3000)))
+                    //foreach (var item in c.Alloc(Enumerable.Range(0, 100)))
                     //{
                     //    item.Reset();
                     //}
@@ -42,19 +51,15 @@ namespace MSyics.Cacheyi.Examples
             });
         }
 
-        private Task Read()
+        private void Read()
         {
-            return Task.Run(() =>
+            var c = new HogeHoge();
+            foreach (var item in c.HogeStore.AsEnumerable())
             {
-                var c = new HogeHoge();
-                Tracer.Information($"{c.HogeStore.Count}");
-                foreach (var item in c.HogeStore.AsEnumerable().Take(1000))
-                {
-                    item.GetValue();
-                    //Tracer.Information($"{item.Key} {item.GetValue().Message}");
-                }
-                Tracer.Information($"end Read");
-            });
+                var v = item.GetValue();
+                Tracer.Information($"{item.Key} {v}");
+            }
+            Tracer.Information($"end Read");
         }
 
         public class HogeHoge

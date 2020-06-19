@@ -11,16 +11,15 @@ namespace MSyics.Cacheyi.Examples
         static Task Main(string[] args)
         {
             return new Program().
-                //Add<SetupByCacheCenter>().
-                //Add<SetupByCacheStoreProperty>().
-                //Add<SetupForInjection>().
-                //Add<UsingAllocate>().
-                //Add<UsingAddOrUpdate>().
-                //Add<UsingCapacity>().
-                //Add<UsingTimeout>().
-                //Add<UsingReduce>().
-                //Add<UsingDataSourceMonitoring>().
-                Add<UsingHoge>().
+                Add<SetupByCacheCenter>().
+                Add<SetupByCacheStoreProperty>().
+                Add<SetupForInjection>().
+                Add<UsingAllocate>().
+                Add<UsingAddOrUpdate>().
+                Add<UsingCapacity>().
+                Add<UsingTimeout>().
+                Add<UsingAdjust>().
+                Add<UsingDataSourceMonitoring>().
 
                 ShowAsync();
         }

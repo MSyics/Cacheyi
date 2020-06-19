@@ -65,7 +65,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        void Reduce();
+        void Adjust();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -162,8 +162,8 @@ namespace MSyics.Cacheyi
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
 
-        private readonly ReaderWriterLockSlim LockSlim = new ReaderWriterLockSlim();
-        private readonly CacheProxyCollection<TKey, TValue> CacheProxies = new CacheProxyCollection<TKey, TValue>();
+        private readonly ReaderWriterLockSlim lockSlim = new ReaderWriterLockSlim();
+        private readonly CacheProxyCollection<TKey, TValue> cacheProxies = new CacheProxyCollection<TKey, TValue>();
 
         internal InternalCacheStore()
         {
@@ -190,15 +190,15 @@ namespace MSyics.Cacheyi
         ~InternalCacheStore()
         {
             if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
-            LockSlim.Dispose();
+            lockSlim.Dispose();
         }
 
         private CacheProxy<TKey, TValue> AddCachProxy(TKey key, Func<CacheValue<TValue>> getValueCallback)
         {
-            if (HasMaxCapacity && CacheProxies.Count >= MaxCapacity)
+            if (HasMaxCapacity && cacheProxies.Count >= MaxCapacity)
             {
                 // 最大容量を超えるときは、最初の要素を削除します。
-                CacheProxies.RemoveAt(0);
+                cacheProxies.RemoveAt(0);
             }
             var item = new CacheProxy<TKey, TValue>()
             {
@@ -210,17 +210,17 @@ namespace MSyics.Cacheyi
             {
                 item.TimedOutCallBack = () => Remove(key);
             }
-            CacheProxies.Add(item);
+            cacheProxies.Add(item);
             return item;
         }
 
         public void AddOrUpdate(TKeyed keyed, TValue value)
         {
-            using (LockSlim.Scope(LockStatus.UpgradeableRead))
+            using (lockSlim.Scope(LockStatus.UpgradeableRead))
             {
                 var key = KeyBuilder.GetKey(keyed);
-                CacheProxies.Remove(key);
-                using (LockSlim.Scope(LockStatus.Write))
+                cacheProxies.Remove(key);
+                using (lockSlim.Scope(LockStatus.Write))
                 {
                     AddCachProxy(key, () => new CacheValue<TValue>()
                     {
@@ -234,11 +234,11 @@ namespace MSyics.Cacheyi
         public CacheProxy<TKey, TValue> Allocate(TKeyed keyed)
         {
             if (keyed == null) { new ArgumentNullException(nameof(keyed)); }
-            using (LockSlim.Scope(LockStatus.UpgradeableRead))
+            using (lockSlim.Scope(LockStatus.UpgradeableRead))
             {
                 var key = KeyBuilder.GetKey(keyed);
-                if (CacheProxies.Contains(key)) { return CacheProxies[key]; }
-                using (LockSlim.Scope(LockStatus.Write))
+                if (cacheProxies.Contains(key)) { return cacheProxies[key]; }
+                using (lockSlim.Scope(LockStatus.Write))
                 {
                     var proxy = AddCachProxy(key, () => new CacheValue<TValue>()
                     {
@@ -274,9 +274,9 @@ namespace MSyics.Cacheyi
 
         public void Clear()
         {
-            using (LockSlim.Scope(LockStatus.Write))
+            using (lockSlim.Scope(LockStatus.Write))
             {
-                CacheProxies.Clear();
+                cacheProxies.Clear();
             }
         }
 
@@ -284,9 +284,9 @@ namespace MSyics.Cacheyi
         {
             if (keys == null) { return; }
 
-            using (LockSlim.Scope(LockStatus.Read))
+            using (lockSlim.Scope(LockStatus.Read))
             {
-                foreach (var cache in CacheProxies.Join(keys, x => x.Key, y => y, (x, y) => x))
+                foreach (var cache in cacheProxies.Join(keys, x => x.Key, y => y, (x, y) => x))
                 {
                     cache.Reset();
                 };
@@ -295,9 +295,9 @@ namespace MSyics.Cacheyi
 
         public void Reset()
         {
-            using (LockSlim.Scope(LockStatus.Read))
+            using (lockSlim.Scope(LockStatus.Read))
             {
-                foreach (var cache in CacheProxies)
+                foreach (var cache in cacheProxies)
                 {
                     cache.Reset();
                 }
@@ -308,9 +308,9 @@ namespace MSyics.Cacheyi
         {
             if (key == null) { return true; }
 
-            using (LockSlim.Scope(LockStatus.Write))
+            using (lockSlim.Scope(LockStatus.Write))
             {
-                return CacheProxies.Remove(key);
+                return cacheProxies.Remove(key);
             }
         }
 
@@ -318,11 +318,11 @@ namespace MSyics.Cacheyi
         {
             if (keys == null) { return; }
 
-            using (LockSlim.Scope(LockStatus.Write))
+            using (lockSlim.Scope(LockStatus.Write))
             {
                 foreach (var key in keys)
                 {
-                    CacheProxies.Remove(key);
+                    cacheProxies.Remove(key);
                 }
             }
         }
@@ -331,15 +331,15 @@ namespace MSyics.Cacheyi
 
         public void Remove(IEnumerable<TKeyed> keyeds) => Remove(keyeds.Select(x => KeyBuilder.GetKey(x)));
 
-        public void Reduce()
+        public void Adjust()
         {
-            using (LockSlim.Scope(LockStatus.Write))
+            using (lockSlim.Scope(LockStatus.Write))
             {
-                var items = CacheProxies.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
-                CacheProxies.Clear();
+                var items = cacheProxies.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
+                cacheProxies.Clear();
                 foreach (var item in items)
                 {
-                    CacheProxies.Add(item);
+                    cacheProxies.Add(item);
                 }
             }
         }
@@ -372,13 +372,13 @@ namespace MSyics.Cacheyi
 
         public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
         {
-            using (LockSlim.Scope(LockStatus.Read))
+            using (lockSlim.Scope(LockStatus.Read))
             {
-                return CacheProxies.ToArray();
+                return cacheProxies.ToArray();
             }
         }
 
-        public int Count => CacheProxies.Count;
+        public int Count => cacheProxies.Count;
         public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
         public bool CanMonitoring => Monitoring != null;
         public bool HasMaxCapacity => MaxCapacity > 0;
@@ -472,7 +472,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void Reduce() => Internal.Reduce();
+        public void Adjust() => Internal.Adjust();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -602,7 +602,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void Reduce() => Internal.Reduce();
+        public void Adjust() => Internal.Adjust();
 
         /// <summary>
         /// すべての要素をリセットします。

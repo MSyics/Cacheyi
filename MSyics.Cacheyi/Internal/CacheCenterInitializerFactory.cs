@@ -8,21 +8,21 @@ namespace MSyics.Cacheyi
 {
     internal class CacheCenterInitializerFactory
     {
-        private readonly ParameterExpression ParaX = Expression.Parameter(typeof(object), "x");
-        private ParameterExpression ParaCenter;
+        private readonly ParameterExpression paraX = Expression.Parameter(typeof(object), "x");
+        private ParameterExpression paraCenter;
 
         public Action<object> Create(Type center)
         {
-            ParaCenter = Expression.Parameter(center, "center");
-            var body = Expression.Block(new[] { ParaCenter }, GetExpressions(center));
-            var lamda = Expression.Lambda<Action<object>>(body, ParaX);
+            paraCenter = Expression.Parameter(center, "center");
+            var body = Expression.Block(new[] { paraCenter }, GetExpressions(center));
+            var lamda = Expression.Lambda<Action<object>>(body, paraX);
             return lamda.Compile();
         }
 
         private IEnumerable<Expression> GetExpressions(Type center)
         {
             // $center = $x
-            yield return Expression.Assign(ParaCenter, Expression.Convert(ParaX, center));
+            yield return Expression.Assign(paraCenter, Expression.Convert(paraX, center));
             // $center.[store] = (StoreType)object;
             var properties = center.
                 GetTypeInfo().
@@ -38,7 +38,7 @@ namespace MSyics.Cacheyi
             {
                 yield return
                     Expression.Assign(
-                        Expression.Property(ParaCenter, item),
+                        Expression.Property(paraCenter, item),
                         Expression.Convert(
                             Expression.Constant(
                                 CacheCenter.stores.GetValue($"{center.FullName}.{item.Name}"),

@@ -24,7 +24,6 @@ namespace MSyics.Cacheyi.Examples
 
         private async Task Fire()
         {
-            Product product;
             var cache = new ProductCenter();
 
             Tracer.Information(cache.Products.Allocate(1).GetValue());

@@ -42,7 +42,7 @@ namespace MSyics.Cacheyi
         {
             var scope = new ReaderWriterLockSlimScope()
             {
-                LockSlim = lockSlim,
+                lockSlim = lockSlim,
                 Status = status,
             };
             scope.Enter();
@@ -52,7 +52,7 @@ namespace MSyics.Cacheyi
 
     internal class ReaderWriterLockSlimScope : IDisposable
     {
-        public ReaderWriterLockSlim LockSlim { get; set; }
+        public ReaderWriterLockSlim lockSlim { get; set; }
         public LockStatus Status { get; set; } = LockStatus.None;
 
         public void Enter()
@@ -60,13 +60,13 @@ namespace MSyics.Cacheyi
             switch (Status)
             {
                 case LockStatus.UpgradeableRead:
-                    LockSlim.EnterUpgradeableReadLock();
+                    lockSlim.EnterUpgradeableReadLock();
                     break;
                 case LockStatus.Write:
-                    LockSlim.EnterWriteLock();
+                    lockSlim.EnterWriteLock();
                     break;
                 case LockStatus.Read:
-                    LockSlim.EnterReadLock();
+                    lockSlim.EnterReadLock();
                     break;
                 case LockStatus.None:
                 default:
@@ -79,13 +79,13 @@ namespace MSyics.Cacheyi
             switch (Status)
             {
                 case LockStatus.UpgradeableRead:
-                    LockSlim.ExitUpgradeableReadLock();
+                    lockSlim.ExitUpgradeableReadLock();
                     break;
                 case LockStatus.Write:
-                    LockSlim.ExitWriteLock();
+                    lockSlim.ExitWriteLock();
                     break;
                 case LockStatus.Read:
-                    LockSlim.ExitReadLock();
+                    lockSlim.ExitReadLock();
                     break;
                 case LockStatus.None:
                 default:

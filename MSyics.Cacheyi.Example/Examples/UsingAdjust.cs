@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi.Examples
 {
-    class UsingReduce : Example
+    class UsingAdjust : Example
     {
-        public override string Name => nameof(UsingReduce);
+        public override string Name => nameof(UsingAdjust);
 
         public override Task ShowAsync()
         {
@@ -28,7 +28,7 @@ namespace MSyics.Cacheyi.Examples
             }
 
             Tracer.Debug($"reduce");
-            center.Products.Reduce();
+            center.Products.Adjust();
             Tracer.Information($"alloc count : {center.Products.Count}");
 
             return Task.CompletedTask;

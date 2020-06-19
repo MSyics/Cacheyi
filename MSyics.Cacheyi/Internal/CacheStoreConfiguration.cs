@@ -33,7 +33,7 @@ namespace MSyics.Cacheyi
             store.Monitoring = monitor;
             if (store.Monitoring != null)
             {
-                store.Monitoring.Changed += store.Internal.OnDataSourceChanged;
+                store.Monitoring.DataSourceChanged += store.Internal.OnDataSourceChanged;
             }
             return this;
         }
@@ -78,7 +78,7 @@ namespace MSyics.Cacheyi
             store.Monitoring = monitor;
             if (store.Monitoring != null)
             {
-                store.Monitoring.Changed += store.Internal.OnDataSourceChanged;
+                store.Monitoring.DataSourceChanged += store.Internal.OnDataSourceChanged;
             }
             return this;
         }

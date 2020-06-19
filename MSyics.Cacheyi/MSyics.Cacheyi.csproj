@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.2.2</Version>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.1;</TargetFrameworks>
+    <Version>3.2.3</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/MSyics/Cacheyi</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MSyics/Cacheyi</RepositoryUrl>
@@ -15,21 +15,17 @@
     <Authors>MSyics</Authors>
     <PackageId>Cacheyi</PackageId>
     <Product>MSyics.Cacheyi</Product>
-    <AssemblyVersion>3.2.2.0</AssemblyVersion>
+    <AssemblyVersion>3.2.3.0</AssemblyVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <FileVersion>3.2.2.0</FileVersion>
+    <FileVersion>3.2.3.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.0\MSyics.Cacheyi.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netcoreapp3.1\MSyics.Cacheyi.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\MSyics.Cacheyi.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\netcoreapp3.1\MSyics.Cacheyi.xml</DocumentationFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="CacheStore - コピー.cs" />
-  </ItemGroup>
 
 </Project>

@@ -11,7 +11,7 @@ namespace MSyics.Cacheyi.Monitoring
         /// <summary>
         /// データソースに変更があったときに発生します。
         /// </summary>
-        event EventHandler<DataSourceChangedEventArgs<TKey>> Changed;
+        event EventHandler<DataSourceChangedEventArgs<TKey>> DataSourceChanged;
 
         /// <summary>
         /// データソースの監視を開始します。

@@ -4,36 +4,35 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MSyics.Cacheyi.Examples
+namespace MSyics.Cacheyi
 {
     abstract class Example : IExample
     {
         public abstract string Name { get; }
 
-        protected Tracer Tracer = Traceable.Get();
+        protected Tracer Tracer { get; private set; }
 
-        static Example()
+        public virtual void Setup()
         {
             Traceable.Add("Traceyi.json");
+            Tracer = Traceable.Get();
         }
 
-        public virtual void Setup() { }
+        void IExample.Show() { }
 
-        public void Show()
+        async Task IExample.ShowAsync()
         {
             using (Tracer.Scope(Name))
             {
-                ShowCore();
+                await ShowAsync();
             }
         }
 
-        public abstract void ShowCore();
+        public abstract Task ShowAsync();
 
         public virtual void Teardown()
         {
             Traceable.Shutdown();
         }
-
-        public virtual Task ShowAsync() { return Task.CompletedTask; }
     }
 }

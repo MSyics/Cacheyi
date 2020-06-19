@@ -2,7 +2,6 @@
   "Traceyi": {
     "Tracer": [
       {
-        "UseMemberInfo": false,
         "Listeners": [ "console" ]
       }
     ],
@@ -10,10 +9,10 @@
       "Console": [
         {
           "Name": "console",
-          "UseLock": true,
-          "UseAsync": false,
+          "UseLock": false,
+          "UseAsync": true,
           "Layout": {
-            "Format": "{operationId} {action|,10:L}{message}"
+            "Format": "{elapsed:hh\\.mm\\.ss\\.fffffff} {action|,10:L}{operationId}{tab}{message}"
           }
         }
       ]

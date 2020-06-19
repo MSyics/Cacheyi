@@ -65,7 +65,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        void DoOut();
+        void Reduce();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -76,27 +76,27 @@ namespace MSyics.Cacheyi
         /// 指定したオブジェクトから要素を引き当てます。
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
-        CacheProxy<TKey, TValue> Alloc(TKeyed keyed);
+        CacheProxy<TKey, TValue> Allocate(TKeyed keyed);
 
         /// <summary>
         /// 指定したオブジェクトの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-        CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds);
+        CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds);
 
         /// <summary>
         /// 指定した要素を登録します。
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="value">登録する要素</param>
-        CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value);
+        void AddOrUpdate(TKeyed keyed, TValue value);
 
         /// <summary>
         /// 指定したオブジェクトで要素の引当を試みます。
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="cache">要素</param>
-        bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+        bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
 
         /// <summary>
         /// 指定したオブジェクトで要素を削除します。
@@ -122,20 +122,20 @@ namespace MSyics.Cacheyi
         /// 指定したキーから要素を引き当てます。
         /// </summary>
         /// <param name="key">キー</param>
-        new CacheProxy<TKey, TValue> Alloc(TKey key);
+        new CacheProxy<TKey, TValue> Allocate(TKey key);
 
         /// <summary>
         /// 指定したキーの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keys">キーの一覧</param>
-        new CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKey> keys);
+        new CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys);
 
         /// <summary>
         /// 指定したキーで要素の引当を試みます。
         /// </summary>
         /// <param name="key">キー</param>
         /// <param name="cache">要素</param>
-        new bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache);
+        new bool TryAllocate(TKey key, out CacheProxy<TKey, TValue> cache);
 
         /// <summary>
         /// 指定したキーで要素を削除します。
@@ -150,11 +150,11 @@ namespace MSyics.Cacheyi
         new void Remove(IEnumerable<TKey> keys);
 
         /// <summary>
-        /// 指定した要素を登録します。
+        /// 指定した要素を登録または更新します。
         /// </summary>
         /// <param name="key">キー</param>
         /// <param name="value">登録する要素</param>
-        new CacheProxy<TKey, TValue> Alloc(TKey key, TValue value);
+        new void AddOrUpdate(TKey key, TValue value);
     }
 
     internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -169,20 +169,22 @@ namespace MSyics.Cacheyi
         {
         }
 
-        internal InternalCacheStore(ICacheKeyBuilder<TKeyed, TKey> keyBuilder, ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder)
+        internal InternalCacheStore(
+            ICacheKeyBuilder<TKeyed, TKey> keyBuilder,
+            ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder,
+            IDataSourceMonitoring<TKey> monitoring = null,
+            int? maxCapacity = null,
+            TimeSpan? timeout = null)
         {
             KeyBuilder = keyBuilder;
             ValueBuilder = valueBuilder;
-        }
-
-        internal InternalCacheStore(ICacheKeyBuilder<TKeyed, TKey> keyBuilder, ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring) :
-            this(keyBuilder, valueBuilder)
-        {
             Monitoring = monitoring;
             if (Monitoring != null)
             {
-                Monitoring.Changed += OnDataSourceChanged;
+                Monitoring.DataSourceChanged += OnDataSourceChanged;
             }
+            MaxCapacity = maxCapacity ?? 0;
+            Timeout = timeout ?? TimeSpan.Zero;
         }
 
         ~InternalCacheStore()
@@ -212,7 +214,7 @@ namespace MSyics.Cacheyi
             return item;
         }
 
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value)
+        public void AddOrUpdate(TKeyed keyed, TValue value)
         {
             using (LockSlim.Scope(LockStatus.UpgradeableRead))
             {
@@ -220,17 +222,16 @@ namespace MSyics.Cacheyi
                 CacheProxies.Remove(key);
                 using (LockSlim.Scope(LockStatus.Write))
                 {
-                    var proxy = AddCachProxy(key, () => new CacheValue<TValue>()
+                    AddCachProxy(key, () => new CacheValue<TValue>()
                     {
                         Value = value,
                         Cached = DateTimeOffset.Now,
                     });
-                    return proxy;
                 }
             }
         }
 
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed)
+        public CacheProxy<TKey, TValue> Allocate(TKeyed keyed)
         {
             if (keyed == null) { new ArgumentNullException(nameof(keyed)); }
             using (LockSlim.Scope(LockStatus.UpgradeableRead))
@@ -249,7 +250,7 @@ namespace MSyics.Cacheyi
             }
         }
 
-        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds)
+        public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds)
         {
             if (keyeds == null)
             {
@@ -260,14 +261,14 @@ namespace MSyics.Cacheyi
             else
             {
                 return keyeds.
-                    Select(x => Alloc(x)).
+                    Select(x => Allocate(x)).
                     ToArray();
             }
         }
 
-        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
+        public bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
         {
-            cache = keyed == null ? null : Alloc(keyed);
+            cache = keyed == null ? null : Allocate(keyed);
             return cache != null;
         }
 
@@ -330,7 +331,7 @@ namespace MSyics.Cacheyi
 
         public void Remove(IEnumerable<TKeyed> keyeds) => Remove(keyeds.Select(x => KeyBuilder.GetKey(x)));
 
-        public void DoOut()
+        public void Reduce()
         {
             using (LockSlim.Scope(LockStatus.Write))
             {
@@ -406,23 +407,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 
         /// </summary>
-        public CacheStore(Func<TKey, TValue> valueBuilder)
-        {
-            Internal = new InternalCacheStore<TKey, TKey, TValue>(
-                new FuncCacheKeyFactory<TKey, TKey>
-                {
-                    Build = key => key
-                },
-                new FuncCacheValueBuilder<TKey, TKey, TValue>
-                {
-                    Build = (_, key) => valueBuilder(key)
-                });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public CacheStore(Func<TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring)
+        public CacheStore(Func<TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring = null, int? maxCapacity = null, TimeSpan? timeout = null)
         {
             Internal = new InternalCacheStore<TKey, TKey, TValue>(
                 new FuncCacheKeyFactory<TKey, TKey>
@@ -433,7 +418,9 @@ namespace MSyics.Cacheyi
                 {
                     Build = (_, key) => valueBuilder(key)
                 },
-                monitoring);
+                monitoring,
+                maxCapacity,
+                timeout);
         }
 
         /// <summary>
@@ -485,7 +472,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void DoOut() => Internal.DoOut();
+        public void Reduce() => Internal.Reduce();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -496,20 +483,20 @@ namespace MSyics.Cacheyi
         /// 指定したキーで要素を引き当てます。
         /// </summary>
         /// <param name="key">要素を選別するキー</param>
-        public CacheProxy<TKey, TValue> Alloc(TKey key) => Internal.Alloc(key);
+        public CacheProxy<TKey, TValue> Allocate(TKey key) => Internal.Allocate(key);
 
         /// <summary>
         /// 指定したキーの一覧に一致する要素を引き当てます。
         /// </summary>
         /// <param name="keys">キーの一覧</param>
-        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKey> keys) => Internal.Alloc(keys);
+        public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys) => Internal.Allocate(keys);
 
         /// <summary>
         /// 指定したキーで要素の引当を試みます。
         /// </summary>
         /// <param name="key">要素を選別するキー</param>
         /// <param name="cache">要素</param>
-        public bool TryAlloc(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(key, out cache);
+        public bool TryAllocate(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAllocate(key, out cache);
 
         /// <summary>
         /// 指定したキーで要素を削除します。
@@ -528,7 +515,7 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="key">要素のキー</param>
         /// <param name="value">登録する要素</param>
-        public CacheProxy<TKey, TValue> Alloc(TKey key, TValue value) => Internal.Alloc(key, value);
+        public void AddOrUpdate(TKey key, TValue value) => Internal.AddOrUpdate(key, value);
 
     }
 
@@ -550,34 +537,20 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 
         /// </summary>
-        public CacheStore(Func<TKeyed, TKey> keyBuilde, Func<TKeyed, TKey, TValue> valueBuilder)
+        public CacheStore(Func<TKeyed, TKey> keyBuilder, Func<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring = null, int? maxCapacity = null, TimeSpan? timeout = null)
         {
             Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
                 new FuncCacheKeyFactory<TKeyed, TKey>
                 {
-                    Build = keyBuilde
-                },
-                new FuncCacheValueBuilder<TKeyed, TKey, TValue>
-                {
-                    Build = valueBuilder
-                });
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public CacheStore(Func<TKeyed, TKey> keyBuilde, Func<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring)
-        {
-            Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
-                new FuncCacheKeyFactory<TKeyed, TKey>
-                {
-                    Build = keyBuilde
+                    Build = keyBuilder
                 },
                 new FuncCacheValueBuilder<TKeyed, TKey, TValue>
                 {
                     Build = valueBuilder
                 },
-                monitoring);
+                monitoring,
+                maxCapacity,
+                timeout);
         }
 
         /// <summary>
@@ -629,7 +602,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void DoOut() => Internal.DoOut();
+        public void Reduce() => Internal.Reduce();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -640,20 +613,20 @@ namespace MSyics.Cacheyi
         /// 指定したオブジェクトから要素を引き当てます。
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed) => Internal.Alloc(keyed);
+        public CacheProxy<TKey, TValue> Allocate(TKeyed keyed) => Internal.Allocate(keyed);
 
         /// <summary>
         /// 指定したオブジェクトの一覧から要素を引き当てます。
         /// </summary>
         /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-        public CacheProxy<TKey, TValue>[] Alloc(IEnumerable<TKeyed> keyeds) => Internal.Alloc(keyeds);
+        public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds) => Internal.Allocate(keyeds);
 
         /// <summary>
         /// 指定したオブジェクトで要素の引当を試みます。
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="cache">要素</param>
-        public bool TryAlloc(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => Internal.TryAlloc(keyed, out cache);
+        public bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => Internal.TryAllocate(keyed, out cache);
 
         /// <summary>
         /// 指定したオブジェクトで要素を削除します。
@@ -672,6 +645,6 @@ namespace MSyics.Cacheyi
         /// </summary>
         /// <param name="keyed">キーを保有するオブジェクト</param>
         /// <param name="value">登録する要素</param>
-        public CacheProxy<TKey, TValue> Alloc(TKeyed keyed, TValue value) => Internal.Alloc(keyed, value);
+        public void AddOrUpdate(TKeyed keyed, TValue value) => Internal.AddOrUpdate(keyed, value);
     }
 }

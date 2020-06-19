@@ -10,7 +10,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">保持要素の型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
-        private readonly object LockObj = new object();
+        private readonly object lockObj = new object();
 
         internal CacheProxy() { }
 
@@ -19,7 +19,7 @@ namespace MSyics.Cacheyi
         /// </summary>
         public TValue GetValue()
         {
-            lock (LockObj)
+            lock (lockObj)
             {
                 if (Status == CacheStatus.Virtual)
                 {
@@ -40,7 +40,7 @@ namespace MSyics.Cacheyi
         /// </summary>
         public CacheProxy<TKey, TValue> Reset()
         {
-            lock (LockObj)
+            lock (lockObj)
             {
                 Status = CacheStatus.Virtual;
                 CancellingTimeout?.TrySetCanceled();
@@ -61,7 +61,7 @@ namespace MSyics.Cacheyi
             get
             {
                 if (Status != CacheStatus.Real) { return false; }
-                return HasTimeout ? DateTimeOffset.Now >= CacheValue.Cached.Add(Timeout) : false;
+                return HasTimeout && DateTimeOffset.Now >= CacheValue.Cached.Add(Timeout);
             }
         }
 

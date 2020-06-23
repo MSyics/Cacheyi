@@ -216,6 +216,7 @@ namespace MSyics.Cacheyi
 
         public void AddOrUpdate(TKeyed keyed, TValue value)
         {
+            if (keyed == null) { new ArgumentNullException(nameof(keyed)); }
             using (lockSlim.Scope(LockStatus.UpgradeableRead))
             {
                 var key = KeyBuilder.GetKey(keyed);
@@ -240,7 +241,7 @@ namespace MSyics.Cacheyi
                 if (cacheProxies.Contains(key)) { return cacheProxies[key]; }
                 using (lockSlim.Scope(LockStatus.Write))
                 {
-                    var proxy = AddCachProxy(key, () => new CacheValue<TValue>()
+                    var proxy = AddCachProxy(key, () => new CacheValue<TValue>
                     {
                         Value = ValueBuilder.GetValue(keyed, key),
                         Cached = DateTimeOffset.Now,
@@ -306,7 +307,7 @@ namespace MSyics.Cacheyi
 
         private bool Remove(TKey key)
         {
-            if (key == null) { return true; }
+            if (key == null) { return false; }
 
             using (lockSlim.Scope(LockStatus.Write))
             {
@@ -516,7 +517,6 @@ namespace MSyics.Cacheyi
         /// <param name="key">要素のキー</param>
         /// <param name="value">登録する要素</param>
         public void AddOrUpdate(TKey key, TValue value) => Internal.AddOrUpdate(key, value);
-
     }
 
     /// <summary>

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp3.1;</TargetFrameworks>
-    <Version>3.2.3</Version>
+    <Version>3.2.4</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/MSyics/Cacheyi</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MSyics/Cacheyi</RepositoryUrl>
@@ -15,9 +15,9 @@
     <Authors>MSyics</Authors>
     <PackageId>Cacheyi</PackageId>
     <Product>MSyics.Cacheyi</Product>
-    <AssemblyVersion>3.2.3.0</AssemblyVersion>
+    <AssemblyVersion>3.2.4.0</AssemblyVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <FileVersion>3.2.3.0</FileVersion>
+    <FileVersion>3.2.4.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

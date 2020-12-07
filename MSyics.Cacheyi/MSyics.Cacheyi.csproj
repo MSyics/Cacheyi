@@ -17,6 +17,7 @@
     <Product>MSyics.Cacheyi</Product>
     <AssemblyVersion>3.3.0.0</AssemblyVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageVersion>3.3.0-alpha1</PackageVersion>
     <FileVersion>3.3.0.0</FileVersion>
   </PropertyGroup>
 

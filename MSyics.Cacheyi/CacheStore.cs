@@ -37,6 +37,11 @@ namespace MSyics.Cacheyi
         bool HasTimeout { get; }
 
         /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        CacheValueTimeoutBehaivor TimeoutBehaivor { get; }
+
+        /// <summary>
         /// データソース監視オブジェクトを取得します。
         /// </summary>
         IDataSourceMonitoring<TKey> Monitoring { get; }
@@ -208,7 +213,18 @@ namespace MSyics.Cacheyi
             };
             if (HasTimeout)
             {
-                item.TimedOutCallBack = () => Remove(key);
+                switch (TimeoutBehaivor)
+                {
+                    case CacheValueTimeoutBehaivor.Remove:
+                        item.TimedOutCallBack = () => Remove(key);
+                        break;
+                    case CacheValueTimeoutBehaivor.Reset:
+                        item.TimedOutCallBack = () => item.Reset().Status == CacheStatus.Virtual;
+                        break;
+                    case CacheValueTimeoutBehaivor.None:
+                    default:
+                        break;
+                }
             }
             cacheProxies.Add(item);
             return item;
@@ -386,6 +402,7 @@ namespace MSyics.Cacheyi
         public bool HasTimeout => Timeout != TimeSpan.Zero;
         public TimeSpan Timeout { get; internal set; } = TimeSpan.Zero;
         public int MaxCapacity { get; internal set; } = 0;
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get; internal set; } = CacheValueTimeoutBehaivor.None;
     }
 
     /// <summary>
@@ -443,6 +460,11 @@ namespace MSyics.Cacheyi
         /// 保持期間を持っているかどうかを示す値を取得します。
         /// </summary>
         public bool HasTimeout => Internal.HasTimeout;
+
+        /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
 
         /// <summary>
         /// データソース監視オブジェクトを取得します。
@@ -572,6 +594,11 @@ namespace MSyics.Cacheyi
         /// 保持期間を持っているかどうかを示す値を取得します。
         /// </summary>
         public bool HasTimeout => Internal.HasTimeout;
+
+        /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
 
         /// <summary>
         /// データソース監視オブジェクトを取得します。

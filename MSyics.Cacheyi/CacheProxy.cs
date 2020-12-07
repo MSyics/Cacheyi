@@ -28,7 +28,7 @@ namespace MSyics.Cacheyi
 
                     if (HasTimeout)
                     {
-                        CancellingTimeout = TimedOutCallBack.StartNewTimer(Timeout);
+                        CancellingTimeout = TimedOutCallBack?.StartNewTimer(Timeout);
                     }
                 }
                 return CacheValue.Value;
@@ -44,6 +44,22 @@ namespace MSyics.Cacheyi
             {
                 Status = CacheStatus.Virtual;
                 CancellingTimeout?.TrySetCanceled();
+                return this;
+            }
+        }
+
+        /// <summary>
+        /// 要素の保持状態を保持期間を過ぎていたらリセットします。
+        /// </summary>
+        public CacheProxy<TKey, TValue> ResetIfTimeout()
+        {
+            lock (lockObj)
+            {
+                if (TimedOut)
+                {
+                    Status = CacheStatus.Virtual;
+                    CancellingTimeout?.TrySetCanceled();
+                }
                 return this;
             }
         }

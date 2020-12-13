@@ -3,7 +3,7 @@
 namespace MSyics.Cacheyi.Configuration
 {
     /// <summary>
-    /// 保持する要素の設定を行います。。
+    /// 保持する要素の設定を行います。
     /// </summary>
     public interface ICacheValueConfiguration<TKey, TValue>
     {
@@ -15,7 +15,7 @@ namespace MSyics.Cacheyi.Configuration
     }
 
     /// <summary>
-    /// 保持する要素の設定を行います。。
+    /// 保持する要素の設定を行います。
     /// </summary>
     public interface ICacheValueConfiguration<TKeyed, TKey, TValue>
     {

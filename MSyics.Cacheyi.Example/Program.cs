@@ -18,9 +18,10 @@ namespace MSyics.Cacheyi.Examples
                 //Add<UsingAddOrUpdate>().
                 //Add<UsingCapacity>().
                 //Add<UsingTimeout>().
-                //Add<UsingAdjust>().
+                Add<UsingTimeoutBehavior>().
+                //Add<UsingTrimExcess>().
                 //Add<UsingDataSourceMonitoring>().
-                Add<ExampleOfLoad>().
+                //Add<ExampleOfLoad>().
 
                 ShowAsync();
         }

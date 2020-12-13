@@ -40,9 +40,9 @@ namespace MSyics.Cacheyi
     {
         public static IDisposable Scope(this ReaderWriterLockSlim lockSlim, LockStatus status)
         {
-            var scope = new ReaderWriterLockSlimScope()
+            var scope = new ReaderWriterLockSlimScope
             {
-                lockSlim = lockSlim,
+                LockSlim = lockSlim,
                 Status = status,
             };
             scope.Enter();
@@ -52,7 +52,7 @@ namespace MSyics.Cacheyi
 
     internal class ReaderWriterLockSlimScope : IDisposable
     {
-        public ReaderWriterLockSlim lockSlim { get; set; }
+        public ReaderWriterLockSlim LockSlim { get; set; }
         public LockStatus Status { get; set; } = LockStatus.None;
 
         public void Enter()
@@ -60,13 +60,13 @@ namespace MSyics.Cacheyi
             switch (Status)
             {
                 case LockStatus.UpgradeableRead:
-                    lockSlim.EnterUpgradeableReadLock();
+                    LockSlim.EnterUpgradeableReadLock();
                     break;
                 case LockStatus.Write:
-                    lockSlim.EnterWriteLock();
+                    LockSlim.EnterWriteLock();
                     break;
                 case LockStatus.Read:
-                    lockSlim.EnterReadLock();
+                    LockSlim.EnterReadLock();
                     break;
                 case LockStatus.None:
                 default:
@@ -79,13 +79,13 @@ namespace MSyics.Cacheyi
             switch (Status)
             {
                 case LockStatus.UpgradeableRead:
-                    lockSlim.ExitUpgradeableReadLock();
+                    LockSlim.ExitUpgradeableReadLock();
                     break;
                 case LockStatus.Write:
-                    lockSlim.ExitWriteLock();
+                    LockSlim.ExitWriteLock();
                     break;
                 case LockStatus.Read:
-                    lockSlim.ExitReadLock();
+                    LockSlim.ExitReadLock();
                     break;
                 case LockStatus.None:
                 default:

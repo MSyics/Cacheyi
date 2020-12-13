@@ -37,6 +37,11 @@ namespace MSyics.Cacheyi
         bool HasTimeout { get; }
 
         /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        CacheValueTimeoutBehaivor TimeoutBehaivor { get; }
+
+        /// <summary>
         /// データソース監視オブジェクトを取得します。
         /// </summary>
         IDataSourceMonitoring<TKey> Monitoring { get; }
@@ -65,7 +70,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        void Adjust();
+        void TrimExcess();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -208,7 +213,18 @@ namespace MSyics.Cacheyi
             };
             if (HasTimeout)
             {
-                item.TimedOutCallBack = () => Remove(key);
+                switch (TimeoutBehaivor)
+                {
+                    case CacheValueTimeoutBehaivor.Remove:
+                        item.TimedOutCallBack = () => Remove(key);
+                        break;
+                    case CacheValueTimeoutBehaivor.Reset:
+                        item.TimedOutCallBack = () => item.Reset().Status == CacheStatus.Virtual;
+                        break;
+                    case CacheValueTimeoutBehaivor.None:
+                    default:
+                        break;
+                }
             }
             cacheProxies.Add(item);
             return item;
@@ -332,7 +348,7 @@ namespace MSyics.Cacheyi
 
         public void Remove(IEnumerable<TKeyed> keyeds) => Remove(keyeds.Select(x => KeyBuilder.GetKey(x)));
 
-        public void Adjust()
+        public void TrimExcess()
         {
             using (lockSlim.Scope(LockStatus.Write))
             {
@@ -386,6 +402,7 @@ namespace MSyics.Cacheyi
         public bool HasTimeout => Timeout != TimeSpan.Zero;
         public TimeSpan Timeout { get; internal set; } = TimeSpan.Zero;
         public int MaxCapacity { get; internal set; } = 0;
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get; internal set; } = CacheValueTimeoutBehaivor.None;
     }
 
     /// <summary>
@@ -445,6 +462,11 @@ namespace MSyics.Cacheyi
         public bool HasTimeout => Internal.HasTimeout;
 
         /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
+
+        /// <summary>
         /// データソース監視オブジェクトを取得します。
         /// </summary>
         public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
@@ -473,7 +495,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void Adjust() => Internal.Adjust();
+        public void TrimExcess() => Internal.TrimExcess();
 
         /// <summary>
         /// すべての要素をリセットします。
@@ -574,6 +596,11 @@ namespace MSyics.Cacheyi
         public bool HasTimeout => Internal.HasTimeout;
 
         /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得します。
+        /// </summary>
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
+
+        /// <summary>
         /// データソース監視オブジェクトを取得します。
         /// </summary>
         public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
@@ -602,7 +629,7 @@ namespace MSyics.Cacheyi
         /// <para>保持している要素を圧縮して整理します。</para>
         /// <para>この操作は、実要素を保持していない要素を削除します。</para>
         /// </summary>
-        public void Adjust() => Internal.Adjust();
+        public void TrimExcess() => Internal.TrimExcess();
 
         /// <summary>
         /// すべての要素をリセットします。

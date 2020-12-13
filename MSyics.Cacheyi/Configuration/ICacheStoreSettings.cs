@@ -16,11 +16,17 @@ namespace MSyics.Cacheyi.Configuration
         /// 保持期間を取得または設定します。
         /// </summary>
         TimeSpan? Timeout { get; set; }
+
+        /// <summary>
+        /// 保持期間を過ぎた際の挙動を取得または設定します。
+        /// </summary>
+        CacheValueTimeoutBehaivor? TimeoutBehavior { get; set; }
     }
 
     internal class CacheStoreSettings : ICacheStoreSettings
     {
         public int? MaxCapacity { get; set; }
         public TimeSpan? Timeout { get; set; }
+        public CacheValueTimeoutBehaivor? TimeoutBehavior { get; set; }
     }
 }

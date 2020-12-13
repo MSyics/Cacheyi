@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace MSyics.Cacheyi.Examples
 {
-    class UsingAdjust : Example
+    class UsingTrimExcess : Example
     {
-        public override string Name => nameof(UsingAdjust);
+        public override string Name => nameof(UsingTrimExcess);
 
         public override Task ShowAsync()
         {
@@ -28,8 +28,8 @@ namespace MSyics.Cacheyi.Examples
             }
 
             Tracer.Debug($"reduce");
-            center.Products.Adjust();
-            Tracer.Information($"alloc count : {center.Products.Count}");
+            center.Products.TrimExcess();
+            Tracer.Information($"allocate count : {center.Products.Count}");
 
             return Task.CompletedTask;
         }

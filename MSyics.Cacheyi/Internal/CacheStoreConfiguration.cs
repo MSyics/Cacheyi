@@ -24,6 +24,7 @@ namespace MSyics.Cacheyi
             var store = CacheCenter.stores.GetValue<TKey, TValue>(name);
             store.MaxCapacity = setting.MaxCapacity ?? 0;
             store.Timeout = setting.Timeout ?? TimeSpan.Zero;
+            store.TimeoutBehaivor = setting.TimeoutBehavior ?? CacheValueTimeoutBehaivor.Reset;
             return this;
         }
 

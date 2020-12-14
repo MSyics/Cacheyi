@@ -179,7 +179,8 @@ namespace MSyics.Cacheyi
             ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder,
             IDataSourceMonitoring<TKey> monitoring = null,
             int? maxCapacity = null,
-            TimeSpan? timeout = null)
+            TimeSpan? timeout = null,
+            CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
         {
             KeyBuilder = keyBuilder;
             ValueBuilder = valueBuilder;
@@ -190,6 +191,7 @@ namespace MSyics.Cacheyi
             }
             MaxCapacity = maxCapacity ?? 0;
             Timeout = timeout ?? TimeSpan.Zero;
+            TimeoutBehaivor = timeoutBehaivor ?? CacheValueTimeoutBehaivor.None;
         }
 
         ~InternalCacheStore()
@@ -259,7 +261,7 @@ namespace MSyics.Cacheyi
                 {
                     var proxy = AddCachProxy(key, () => new CacheValue<TValue>
                     {
-                        Value = ValueBuilder.GetValue(keyed, key),
+                        Value = ValueBuilder.GetValue(keyed),
                         Cached = DateTimeOffset.Now,
                     });
                     return proxy;
@@ -425,7 +427,12 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 
         /// </summary>
-        public CacheStore(Func<TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring = null, int? maxCapacity = null, TimeSpan? timeout = null)
+        public CacheStore(
+            Func<TKey, TValue> valueBuilder, 
+            IDataSourceMonitoring<TKey> monitoring = null, 
+            int? maxCapacity = null, 
+            TimeSpan? timeout = null, 
+            CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
         {
             Internal = new InternalCacheStore<TKey, TKey, TValue>(
                 new FuncCacheKeyFactory<TKey, TKey>
@@ -434,11 +441,12 @@ namespace MSyics.Cacheyi
                 },
                 new FuncCacheValueBuilder<TKey, TKey, TValue>
                 {
-                    Build = (_, key) => valueBuilder(key)
+                    Build = key => valueBuilder(key)
                 },
                 monitoring,
                 maxCapacity,
-                timeout);
+                timeout,
+                timeoutBehaivor);
         }
 
         /// <summary>
@@ -559,7 +567,13 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 
         /// </summary>
-        public CacheStore(Func<TKeyed, TKey> keyBuilder, Func<TKeyed, TKey, TValue> valueBuilder, IDataSourceMonitoring<TKey> monitoring = null, int? maxCapacity = null, TimeSpan? timeout = null)
+        public CacheStore(
+            Func<TKeyed, TKey> keyBuilder, 
+            Func<TKeyed, TValue> valueBuilder, 
+            IDataSourceMonitoring<TKey> monitoring = null, 
+            int? maxCapacity = null, 
+            TimeSpan? timeout = null,
+            CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
         {
             Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
                 new FuncCacheKeyFactory<TKeyed, TKey>
@@ -572,7 +586,8 @@ namespace MSyics.Cacheyi
                 },
                 monitoring,
                 maxCapacity,
-                timeout);
+                timeout,
+                timeoutBehaivor);
         }
 
         /// <summary>

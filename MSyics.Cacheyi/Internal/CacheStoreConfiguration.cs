@@ -44,7 +44,7 @@ namespace MSyics.Cacheyi
             var store = CacheCenter.stores.GetValue<TKey, TValue>(name);
             store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKey, TKey, TValue>()
             {
-                Build = (_, key) => builder(key)
+                Build = key => builder(key)
             };
         }
     }
@@ -94,7 +94,7 @@ namespace MSyics.Cacheyi
             return this;
         }
 
-        public void GetValue(Func<TKeyed, TKey, TValue> builder)
+        public void GetValue(Func<TKeyed, TValue> builder)
         {
             var store = CacheCenter.stores.GetValue<TKeyed, TKey, TValue>(name);
             store.Internal.ValueBuilder = new FuncCacheValueBuilder<TKeyed, TKey, TValue>()

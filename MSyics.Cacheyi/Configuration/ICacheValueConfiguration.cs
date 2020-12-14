@@ -23,6 +23,6 @@ namespace MSyics.Cacheyi.Configuration
         /// 保持する要素を取得します。
         /// </summary>
         /// <param name="builder">指定したキーから保持する要素を取得する機能</param>
-        void GetValue(Func<TKeyed, TKey, TValue> builder);
+        void GetValue(Func<TKeyed, TValue> builder);
     }
 }

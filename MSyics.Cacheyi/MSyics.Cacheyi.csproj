@@ -11,7 +11,7 @@
     <PackageReleaseNotes></PackageReleaseNotes>
     <PackageLicenseUrl></PackageLicenseUrl>
     <Description>Cacheyi is a micro cache management library. by fluent API.</Description>
-    <Copyright>Copyright (c) 2020 MSyics</Copyright>
+    <Copyright>Copyright (c) 2021 MSyics</Copyright>
     <Company></Company>
     <Authors>MSyics</Authors>
     <PackageId>Cacheyi</PackageId>
@@ -19,7 +19,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <AssemblyVersion>5.0.0.0</AssemblyVersion>
     <FileVersion>5.0.0.0</FileVersion>
-    <PackageVersion>5.0.0-alpha2</PackageVersion>
+    <PackageVersion>5.0.0</PackageVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

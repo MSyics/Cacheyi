@@ -15,7 +15,7 @@ namespace MSyics.Cacheyi.Examples
         {
             for (int i = 0; i < 2; i++)
             {
-                using (Tracer.Scope())
+                using (Tracer.Scope(label: i))
                 {
                     await Fire();
                 }
@@ -26,15 +26,15 @@ namespace MSyics.Cacheyi.Examples
         {
             var cache = new ProductCenter();
 
-            Tracer.Information(cache.Products.Allocate(1).GetValue());
+            Tracer.Information(x => x.value = cache.Products.Allocate(1).GetValue());
 
             Tracer.Debug("wait");
             await Task.Delay(100);
-            Tracer.Information(cache.Products.Allocate(2).GetValue());
+            Tracer.Information(x => x.value = cache.Products.Allocate(2).GetValue());
 
             Tracer.Debug("wait");
             await Task.Delay(100);
-            Tracer.Information(cache.Products.Allocate(1).GetValue());
+            Tracer.Information(x => x.value = cache.Products.Allocate(1).GetValue());
         }
 
         #region Product

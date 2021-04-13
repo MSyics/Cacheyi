@@ -15,7 +15,7 @@ namespace MSyics.Cacheyi.Examples
         {
             for (int i = 0; i < 2; i++)
             {
-                using (Tracer.Scope())
+                using (Tracer.Scope(label: i))
                 {
                     await Fire();
                 }

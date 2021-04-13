@@ -14,7 +14,7 @@ namespace MSyics.Cacheyi.Examples
 
         public override async Task ShowAsync()
         {
-            using (Tracer.Scope(null, "case of add"))
+            using (Tracer.Scope(label: "case of add"))
             {
                 var center = new ProductCenter();
                 var product = new Product { Id = 1, Message = "001", Timestamp = DateTime.Now };
@@ -28,7 +28,7 @@ namespace MSyics.Cacheyi.Examples
                 Tracer.Information($"{cache.Key}, {cache.Status}");
             }
 
-            using (Tracer.Scope(null, "case of update"))
+            using (Tracer.Scope(label: "case of update"))
             {
                 var center = new ProductCenter();
                 var cache = center.Products.Allocate(1);
@@ -44,7 +44,7 @@ namespace MSyics.Cacheyi.Examples
                 Tracer.Information($"{cache.Key}, {cache.Status}");
             }
 
-            using (Tracer.Scope(null, "case of timeout"))
+            using (Tracer.Scope(label: "case of timeout"))
             {
                 var center = new ProductCenter();
                 var cache = center.Products.Allocate(1);

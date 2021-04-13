@@ -14,27 +14,24 @@ namespace MSyics.Cacheyi.Examples
 
         public override async Task ShowAsync()
         {
-            using (Tracer.Scope())
-            {
-                await FireAsync();
-            }
+            await FireAsync();
         }
 
         private async Task FireAsync()
         {
             var cache = new ProductCenter();
 
-            using (Tracer.Scope("none"))
+            using (Tracer.Scope(label: "none"))
             {
                 await FireAsync(cache.ProductsForNone);
             }
 
-            using (Tracer.Scope("remove"))
+            using (Tracer.Scope(label: "remove"))
             {
                 await FireAsync(cache.ProductsForRemove);
             }
 
-            using (Tracer.Scope("reset"))
+            using (Tracer.Scope(label: "reset"))
             {
                 await FireAsync(cache.ProductsForReset);
             }
@@ -44,7 +41,7 @@ namespace MSyics.Cacheyi.Examples
         {
             var cache = new ProductCenter();
             var items = Enumerable.Range(1, 100000).Select(item => store.Allocate(item)).ToArray();
-            
+
             Tracer.Debug("get");
             foreach (var item in items) item.GetValue();
             for (int i = 1; i < 5; i++)

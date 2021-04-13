@@ -14,7 +14,7 @@ namespace MSyics.Cacheyi.Examples
 
         public override Task ShowAsync()
         {
-            using (Tracer.Scope(null, "allocate one from a data source"))
+            using (Tracer.Scope(label: "allocate one from a data source"))
             {
                 var center = new ProductCenter();
                 
@@ -24,7 +24,7 @@ namespace MSyics.Cacheyi.Examples
                 Tracer.Information($"{cache.Key}, {cache.Status}");
             }
 
-            using (Tracer.Scope(null, "multipule allocate from a data source"))
+            using (Tracer.Scope(label: "multipule allocate from a data source"))
             {
                 var center = new ProductCenter();
 

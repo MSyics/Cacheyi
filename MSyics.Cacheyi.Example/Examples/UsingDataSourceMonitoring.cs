@@ -17,8 +17,6 @@ namespace MSyics.Cacheyi.Examples
 
         public override async Task ShowAsync()
         {
-            using var scope = Tracer.Scope();
-
             CretaeFile();
             var center = new ProductCenter();
             center.Products.Monitoring.Start();

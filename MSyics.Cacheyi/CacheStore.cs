@@ -19,7 +19,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の最大保持量を取得します。
         /// </summary>
-        int MaxCapacity { get; }
+        int MaxCapacity { get; set; }
 
         /// <summary>
         /// /最大保持量を持っているかどうかを示す値を取得します。
@@ -29,7 +29,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の保持期間を取得します。
         /// </summary>
-        TimeSpan Timeout { get; }
+        TimeSpan Timeout { get; set; }
 
         /// <summary>
         /// 保持期間を持っているかどうかを示す値を取得します。
@@ -39,7 +39,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 保持期間を過ぎた際の挙動を取得します。
         /// </summary>
-        CacheValueTimeoutBehaivor TimeoutBehaivor { get; }
+        CacheValueTimeoutBehaivor TimeoutBehaivor { get; set; }
 
         /// <summary>
         /// データソース監視オブジェクトを取得します。
@@ -167,8 +167,8 @@ namespace MSyics.Cacheyi
         internal ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
         internal ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
 
-        private readonly ReaderWriterLockSlim lockSlim = new ReaderWriterLockSlim();
-        private readonly CacheProxyCollection<TKey, TValue> cacheProxies = new CacheProxyCollection<TKey, TValue>();
+        private readonly ReaderWriterLockSlim lockSlim = new();
+        private readonly CacheProxyCollection<TKey, TValue> cacheProxies = new();
 
         internal InternalCacheStore()
         {
@@ -402,9 +402,9 @@ namespace MSyics.Cacheyi
         public bool CanMonitoring => Monitoring != null;
         public bool HasMaxCapacity => MaxCapacity > 0;
         public bool HasTimeout => Timeout != TimeSpan.Zero;
-        public TimeSpan Timeout { get; internal set; } = TimeSpan.Zero;
-        public int MaxCapacity { get; internal set; } = 0;
-        public CacheValueTimeoutBehaivor TimeoutBehaivor { get; internal set; } = CacheValueTimeoutBehaivor.None;
+        public TimeSpan Timeout { get; set; } = TimeSpan.Zero;
+        public int MaxCapacity { get; set; } = 0;
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get; set; } = CacheValueTimeoutBehaivor.None;
     }
 
     /// <summary>
@@ -452,7 +452,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の最大保持量を取得します。
         /// </summary>
-        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+        public int MaxCapacity { get => Internal.MaxCapacity; set => Internal.MaxCapacity = value; }
 
         /// <summary>
         /// /最大保持量を持っているかどうかを示す値を取得します。
@@ -462,7 +462,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の保持期間を取得します。
         /// </summary>
-        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+        public TimeSpan Timeout { get => Internal.Timeout; set => Internal.Timeout = value; }
 
         /// <summary>
         /// 保持期間を持っているかどうかを示す値を取得します。
@@ -472,7 +472,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 保持期間を過ぎた際の挙動を取得します。
         /// </summary>
-        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
 
         /// <summary>
         /// データソース監視オブジェクトを取得します。
@@ -593,7 +593,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の最大保持量を取得します。
         /// </summary>
-        public int MaxCapacity { get => Internal.MaxCapacity; internal set => Internal.MaxCapacity = value; }
+        public int MaxCapacity { get => Internal.MaxCapacity; set => Internal.MaxCapacity = value; }
 
         /// <summary>
         /// /最大保持量を持っているかどうかを示す値を取得します。
@@ -603,7 +603,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 要素の保持期間を取得します。
         /// </summary>
-        public TimeSpan Timeout { get => Internal.Timeout; internal set => Internal.Timeout = value; }
+        public TimeSpan Timeout { get => Internal.Timeout; set => Internal.Timeout = value; }
 
         /// <summary>
         /// 保持期間を持っているかどうかを示す値を取得します。
@@ -613,7 +613,7 @@ namespace MSyics.Cacheyi
         /// <summary>
         /// 保持期間を過ぎた際の挙動を取得します。
         /// </summary>
-        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; internal set => Internal.TimeoutBehaivor = value; }
+        public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
 
         /// <summary>
         /// データソース監視オブジェクトを取得します。

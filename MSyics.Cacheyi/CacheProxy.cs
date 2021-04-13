@@ -10,7 +10,7 @@ namespace MSyics.Cacheyi
     /// <typeparam name="TValue">保持要素の型</typeparam>
     public sealed class CacheProxy<TKey, TValue>
     {
-        private readonly object lockObj = new object();
+        private readonly object lockObj = new();
 
         internal CacheProxy() { }
 

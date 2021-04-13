@@ -30,4 +30,8 @@
     <DocumentationFile>bin\Release\netcoreapp3.1\MSyics.Cacheyi.xml</DocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Traceyi" Version="6.0.0-alpha4" />
+  </ItemGroup>
+
 </Project>

@@ -22,7 +22,7 @@ namespace MSyics.Cacheyi
 
         async Task IExample.ShowAsync()
         {
-            using (Tracer.Scope(Name))
+            using (Tracer.Scope(label: Name))
             {
                 await ShowAsync();
             }

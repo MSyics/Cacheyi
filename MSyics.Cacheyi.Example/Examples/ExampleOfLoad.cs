@@ -39,14 +39,11 @@ namespace MSyics.Cacheyi.Examples
         {
             return Task.Run(() =>
             {
-                using (Tracer.Scope())
+                foreach (var cache in new ProductCenter().Products.AsEnumerable())
                 {
-                    foreach (var cache in new ProductCenter().Products.AsEnumerable())
-                    {
-                        Tracer.Information($"{cache.Key}, {cache.Status}");
-                        Tracer.Information($"{cache.GetValue()}");
-                        Tracer.Information($"{cache.Key}, {cache.Status}");
-                    }
+                    Tracer.Information(x => x.before = cache);
+                    Tracer.Information(x => x.value = cache.GetValue());
+                    Tracer.Information(x => x.later = cache);
                 }
             });
         }

@@ -12,7 +12,7 @@
           "UseLock": false,
           "UseAsync": true,
           "Layout": {
-            "Format": "{elapsed:hh\\.mm\\.ss\\.fffffff} {action|,10:L}{operationId}{tab}{message}"
+            "Format": "{elapsed:hh\\.mm\\.ss\\.fffffff} {action|,10:L}{scopeLabel}{tab}{message}{tab}{extensions=>json}"
           }
         }
       ]

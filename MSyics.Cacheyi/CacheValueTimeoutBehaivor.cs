@@ -1,27 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace MSyics.Cacheyi;
 
-namespace MSyics.Cacheyi
+/// <summary>
+/// 保持期間を過ぎた際の挙動を表します。
+/// </summary>
+public enum CacheValueTimeoutBehaivor
 {
     /// <summary>
-    /// 保持期間を過ぎた際の挙動を表します。
+    /// 何もしません。
     /// </summary>
-    public enum CacheValueTimeoutBehaivor
-    {
-        /// <summary>
-        /// 何もしません。
-        /// </summary>
-        None,
+    None,
 
-        /// <summary>
-        /// 削除します。
-        /// </summary>
-        Remove,
+    /// <summary>
+    /// 削除します。
+    /// </summary>
+    Remove,
 
-        /// <summary>
-        /// リセットします。
-        /// </summary>
-        Reset,
-    }
+    /// <summary>
+    /// リセットします。
+    /// </summary>
+    Reset,
 }

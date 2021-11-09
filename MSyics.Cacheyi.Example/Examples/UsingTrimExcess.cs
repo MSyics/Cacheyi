@@ -14,8 +14,6 @@ namespace MSyics.Cacheyi.Examples
 
         public override Task ShowAsync()
         {
-            using var scope = Tracer.Scope();
-
             var center = new ProductCenter();
 
             center.Products.Allocate(Enumerable.Range(1, 10000));
@@ -27,7 +25,7 @@ namespace MSyics.Cacheyi.Examples
                 Tracer.Information($"{item.GetValue()}");
             }
 
-            Tracer.Debug($"reduce");
+            Tracer.Debug($"TrimExcess");
             center.Products.TrimExcess();
             Tracer.Information($"allocate count : {center.Products.Count}");
 
@@ -41,8 +39,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => Products).
+                    CacheStoreDirector.Build(() => Products).
                     Settings(settings =>
                     {
                     }).

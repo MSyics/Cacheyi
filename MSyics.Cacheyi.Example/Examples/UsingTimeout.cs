@@ -15,7 +15,7 @@ namespace MSyics.Cacheyi.Examples
         {
             for (int i = 0; i < 2; i++)
             {
-                using (Tracer.Scope())
+                using (Tracer.Scope(label: i))
                 {
                     await Fire();
                 }
@@ -44,8 +44,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => Products).
+                    CacheStoreDirector.Build(() => Products).
                     Settings(settings =>
                     {
                         settings.Timeout = TimeSpan.FromMilliseconds(200);

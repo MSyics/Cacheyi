@@ -39,8 +39,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => Products).
+                    CacheStoreDirector.Build(() => Products).
                     Settings(settings =>
                     {
                     }).

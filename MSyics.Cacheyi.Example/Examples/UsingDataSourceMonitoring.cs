@@ -36,7 +36,7 @@ namespace MSyics.Cacheyi.Examples
             Tracer.Information($"{cache.Key}, {cache.Status}");
         }
 
-        private void CretaeFile()
+        private static void CretaeFile()
         {
             File.WriteAllLines(filePath, Enumerable.Range(0, 10).Select(key => $"{key},ProductA,{DateTime.Now:yyyy/MM/dd HH:mm:ss.fffffff}"));
         }
@@ -48,8 +48,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => Products).
+                    CacheStoreDirector.Build(() => Products).
                     Settings(settings =>
                     {
                     }).

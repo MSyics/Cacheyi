@@ -78,8 +78,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => ProductsForNone).
+                    CacheStoreDirector.Build(() => ProductsForNone).
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;
@@ -92,8 +91,7 @@ namespace MSyics.Cacheyi.Examples
                         Timestamp = DateTime.Now,
                     });
 
-                    director.
-                    Build(() => ProductsForRemove).
+                    CacheStoreDirector.Build(() => ProductsForRemove).
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;
@@ -106,8 +104,7 @@ namespace MSyics.Cacheyi.Examples
                         Timestamp = DateTime.Now,
                     });
 
-                    director.
-                    Build(() => ProductsForReset).
+                    CacheStoreDirector.Build(() => ProductsForReset).
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;

@@ -18,7 +18,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 var center = new ProductCenter();
                 var product = new Product { Id = 1, Message = "001", Timestamp = DateTime.Now };
-                
+
                 Tracer.Debug($"add {product}");
                 center.Products.AddOrUpdate(product.Id, product);
 
@@ -48,13 +48,13 @@ namespace MSyics.Cacheyi.Examples
             {
                 var center = new ProductCenter();
                 var cache = center.Products.Allocate(1);
-                
+
                 Tracer.Information($"{cache.GetValue()}");
                 Tracer.Information($"{cache.Key}, {cache.Status}");
 
                 Tracer.Debug("wait for the timeout");
                 await Task.Delay(200);
-                
+
                 cache = center.Products.Allocate(1);
                 Tracer.Information($"{cache.Key}, {cache.Status}");
                 Tracer.Information($"{cache.GetValue()}");
@@ -69,8 +69,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    director.
-                    Build(() => Products).
+                    CacheStoreDirector.Build(() => Products).
                     Settings(settings =>
                     {
                         settings.Timeout = TimeSpan.FromMilliseconds(100);

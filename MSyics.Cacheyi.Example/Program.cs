@@ -6,7 +6,7 @@ class Program : ExampleAggregator
     {
         return new Program().
             //Add<SetupByCacheCenter>().
-            //Add<SetupByCacheStoreProperty>().
+            Add<SetupByCacheStoreProperty>().
             //Add<SetupForInjection>().
             //Add<UsingAllocate>().
             //Add<UsingAddOrUpdate>().
@@ -15,7 +15,7 @@ class Program : ExampleAggregator
             //Add<UsingTimeoutBehavior>().
             //Add<UsingTrimExcess>().
             //Add<UsingDataSourceMonitoring>().
-            Add<ExampleOfLoad>().
+            //Add<ExampleOfLoad>().
 
             ShowAsync();
     }

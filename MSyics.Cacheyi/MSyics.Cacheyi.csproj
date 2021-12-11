@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netcoreapp3.1;net6.0;</TargetFrameworks>
     <LangVersion>latest</LangVersion>
-    <Version>6.0.1</Version>
+    <Version>6.0.2-alpha.1</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageProjectUrl>https://github.com/MSyics/Cacheyi</PackageProjectUrl>
     <RepositoryUrl>https://github.com/MSyics/Cacheyi</RepositoryUrl>
@@ -17,8 +17,8 @@
     <PackageId>Cacheyi</PackageId>
     <Product>MSyics.Cacheyi</Product>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <AssemblyVersion>6.0.1.0</AssemblyVersion>
-    <FileVersion>6.0.1.0</FileVersion>
+    <AssemblyVersion>6.0.2.0</AssemblyVersion>
+    <FileVersion>6.0.2.0</FileVersion>
     <PackageVersion>6.0.1</PackageVersion>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

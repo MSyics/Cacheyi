@@ -48,7 +48,7 @@ namespace MSyics.Cacheyi.Examples
             {
                 CacheCenter.ConstructStore(this, director =>
                 {
-                    CacheStoreDirector.Build(() => Products).
+                    director.Build(() => Products).
                     Settings(settings =>
                     {
                         settings.MaxCapacity = 5;

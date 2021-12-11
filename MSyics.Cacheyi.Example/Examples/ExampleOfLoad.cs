@@ -49,7 +49,7 @@ class ExampleOfLoad : Example
         {
             CacheCenter.ConstructStore(this, director =>
             {
-                CacheStoreDirector.Build(() => Products).
+                director.Build(() => Products).
                 Settings(settings =>
                 {
                 }).

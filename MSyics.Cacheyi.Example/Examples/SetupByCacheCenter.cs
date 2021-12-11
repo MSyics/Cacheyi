@@ -68,7 +68,7 @@ namespace MSyics.Cacheyi.Examples
 
             protected override void ConstructStore(CacheStoreDirector director)
             {
-                CacheStoreDirector.Build(() => Products).
+                director.Build(() => Products).
                     Settings(settings =>
                     {
                         settings.MaxCapacity = 100;
@@ -80,7 +80,7 @@ namespace MSyics.Cacheyi.Examples
                         Timestamp = DateTime.Now,
                     });
 
-                CacheStoreDirector.Build(() => KeyedProducts).
+                director.Build(() => KeyedProducts).
                     Settings(settings =>
                     {
                         settings.MaxCapacity = 100;

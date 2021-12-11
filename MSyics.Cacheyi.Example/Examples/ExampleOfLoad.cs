@@ -24,7 +24,7 @@ class ExampleOfLoad : Example
             var store = new ProductCenter().Products;
             for (int i = 0; i < 5; i++)
             {
-                store.AddOrUpdate(i, new Product { Id = i, Message = $"{number}_{i:000}", Timestamp = DateTime.Now });
+                store.Transfer(i, () => new Product { Id = i, Message = $"{number}_{i:000}", Timestamp = DateTime.Now });
             }
         });
     }

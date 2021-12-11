@@ -43,7 +43,7 @@ namespace MSyics.Cacheyi.Examples
             var items = Enumerable.Range(1, 100000).Select(item => store.Allocate(item)).ToArray();
 
             Tracer.Debug("get");
-            foreach (var item in items) item.GetValue();
+            foreach (var item in items) item.TryGetValue(out var _);
             for (int i = 1; i < 5; i++)
             {
                 Display(store);
@@ -51,13 +51,13 @@ namespace MSyics.Cacheyi.Examples
             }
 
             Tracer.Debug("get");
-            foreach (var item in items) item.GetValue();
+            foreach (var item in items) item.TryGetValue(out var _);
             Display(store);
 
             Tracer.Debug("reset if timeout");
             foreach (var item in items)
             {
-                item.ResetIfTimeout().GetValue();
+                item.ResetIfTimeout().TryGetValue(out var _);
             }
             Display(store);
 
@@ -82,7 +82,7 @@ namespace MSyics.Cacheyi.Examples
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;
-                        settings.TimeoutBehavior = CacheValueTimeoutBehaivor.None;
+                        settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
                     }).
                     GetValue(key => new Product
                     {
@@ -95,7 +95,7 @@ namespace MSyics.Cacheyi.Examples
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;
-                        settings.TimeoutBehavior = CacheValueTimeoutBehaivor.Remove;
+                        settings.TimeoutBehavior = CacheTimeoutBehaivor.Release;
                     }).
                     GetValue(key => new Product
                     {
@@ -108,7 +108,7 @@ namespace MSyics.Cacheyi.Examples
                     Settings(settings =>
                     {
                         settings.Timeout = timeout;
-                        settings.TimeoutBehavior = CacheValueTimeoutBehaivor.Reset;
+                        settings.TimeoutBehavior = CacheTimeoutBehaivor.Reset;
                     }).
                     GetValue(key => new Product
                     {

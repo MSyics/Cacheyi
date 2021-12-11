@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Exampleyi" Version="3.1.0" />
-    <PackageReference Include="Traceyi" Version="6.0.0" />
+    <PackageReference Include="Traceyi" Version="6.0.1" />
   </ItemGroup>
 
   <ItemGroup>

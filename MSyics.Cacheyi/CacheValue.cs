@@ -13,7 +13,7 @@ public sealed class CacheValue<TValue>
     public TValue Value { get; internal set; }
 
     /// <summary>
-    /// 保持した時間を取得します。
+    /// 保持した日時を取得します。
     /// </summary>
-    public DateTimeOffset Cached { get; internal set; }
+    public DateTimeOffset CachedAt { get; internal set; }
 }

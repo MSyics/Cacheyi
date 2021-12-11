@@ -23,7 +23,7 @@ internal sealed class CacheStoreConfiguration<TKey, TValue> :
         var store = CacheCenter.stores.GetValue<TKey, TValue>(name);
         store.MaxCapacity = setting.MaxCapacity ?? 0;
         store.Timeout = setting.Timeout ?? TimeSpan.Zero;
-        store.TimeoutBehaivor = setting.TimeoutBehavior ?? CacheValueTimeoutBehaivor.Reset;
+        store.TimeoutBehaivor = setting.TimeoutBehavior ?? CacheTimeoutBehaivor.Reset;
         return this;
     }
 
@@ -31,7 +31,7 @@ internal sealed class CacheStoreConfiguration<TKey, TValue> :
     {
         var store = CacheCenter.stores.GetValue<TKey, TValue>(name);
         store.Monitoring = monitor;
-        if (store.Monitoring != null)
+        if (store.Monitoring is not null)
         {
             store.Monitoring.DataSourceChanged += store.Internal.OnDataSourceChanged;
         }
@@ -69,6 +69,7 @@ internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> :
         var store = CacheCenter.stores.GetValue<TKeyed, TKey, TValue>(name);
         store.MaxCapacity = setting.MaxCapacity ?? 0;
         store.Timeout = setting.Timeout ?? TimeSpan.Zero;
+        store.TimeoutBehaivor = setting.TimeoutBehavior ?? CacheTimeoutBehaivor.Reset;
         return this;
     }
 
@@ -76,7 +77,7 @@ internal sealed class CacheStoreConfiguration<TKeyed, TKey, TValue> :
     {
         var store = CacheCenter.stores.GetValue<TKeyed, TKey, TValue>(name);
         store.Monitoring = monitor;
-        if (store.Monitoring != null)
+        if (store.Monitoring is not null)
         {
             store.Monitoring.DataSourceChanged += store.Internal.OnDataSourceChanged;
         }

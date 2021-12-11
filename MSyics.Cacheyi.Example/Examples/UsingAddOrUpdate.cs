@@ -20,7 +20,7 @@ namespace MSyics.Cacheyi.Examples
                 var product = new Product { Id = 1, Message = "001", Timestamp = DateTime.Now };
 
                 Tracer.Debug($"add {product}");
-                center.Products.AddOrUpdate(product.Id, product);
+                center.Products.Transfer(product.Id, () => product);
 
                 var cache = center.Products.Allocate(1);
                 Tracer.Information($"{cache.Key}, {cache.Status}");
@@ -36,7 +36,7 @@ namespace MSyics.Cacheyi.Examples
 
                 var product = new Product { Id = 1, Message = "111", Timestamp = DateTime.Now };
                 Tracer.Debug($"update {product}");
-                center.Products.AddOrUpdate(product.Id, product);
+                center.Products.Transfer(product.Id, product);
 
                 cache = center.Products.Allocate(1);
                 Tracer.Information($"{cache.Key}, {cache.Status}");

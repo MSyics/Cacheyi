@@ -21,12 +21,12 @@ public enum RefreshCacheWith
     ResetContains,
 
     /// <summary>
-    /// すべて削除します。
+    /// すべて解除します。
     /// </summary>
     Clear,
 
     /// <summary>
-    /// 変更箇所を削除します。
+    /// 変更箇所を解除します。
     /// </summary>
-    Remove,
+    Release,
 }

@@ -24,7 +24,7 @@ internal static partial class ThreadingExtensions
             {
                 tcs.TrySetException(ex);
             }
-        }, null, timeout, TimeSpan.FromTicks(Timeout.Infinite));
+        }, null, timeout, Timeout.InfiniteTimeSpan);
         tcs.Task.ContinueWith(t => timer.Dispose());
         return tcs;
     }

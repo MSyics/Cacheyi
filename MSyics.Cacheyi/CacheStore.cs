@@ -33,7 +33,7 @@ public interface ICacheStore<TKeyed, TKey, TValue>
     /// <summary>
     /// 保持期間を過ぎた際の挙動を取得します。
     /// </summary>
-    CacheValueTimeoutBehaivor TimeoutBehaivor { get; set; }
+    CacheTimeoutBehaivor TimeoutBehaivor { get; set; }
 
     /// <summary>
     /// データソース監視オブジェクトを取得します。
@@ -56,13 +56,13 @@ public interface ICacheStore<TKeyed, TKey, TValue>
     int Count { get; }
 
     /// <summary>
-    /// 保持している要素すべて削除します。
+    /// 保持している要素をすべて解除します。
     /// </summary>
     void Clear();
 
     /// <summary>
     /// <para>保持している要素を圧縮して整理します。</para>
-    /// <para>この操作は、実要素を保持していない要素を削除します。</para>
+    /// <para>この操作は、実要素を保持していない要素を解除します。</para>
     /// </summary>
     void TrimExcess();
 
@@ -84,30 +84,30 @@ public interface ICacheStore<TKeyed, TKey, TValue>
     CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds);
 
     /// <summary>
-    /// 指定した要素を登録します。
+    /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
-    /// <param name="value">登録する要素</param>
-    void AddOrUpdate(TKeyed keyed, TValue value);
+    /// <param name="value">振替値</param>
+    CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value);
 
     /// <summary>
-    /// 指定したオブジェクトで要素の引当を試みます。
+    /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
-    /// <param name="cache">要素</param>
-    bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache);
+    /// <param name="func">振替値を取得する処理</param>
+    CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func);
 
     /// <summary>
-    /// 指定したオブジェクトで要素を削除します。
+    /// 指定したオブジェクトで要素を解除します。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
-    bool Remove(TKeyed keyed);
+    bool Release(TKeyed keyed);
 
     /// <summary>
-    /// 指定したオブジェクトの一覧から要素を削除します。
+    /// 指定したオブジェクトの一覧から要素を解除します。
     /// </summary>
     /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-    void Remove(IEnumerable<TKeyed> keyeds);
+    void Release(IEnumerable<TKeyed> keyeds);
 }
 
 /// <summary>
@@ -130,30 +130,30 @@ public interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
     new CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys);
 
     /// <summary>
-    /// 指定したキーで要素の引当を試みます。
+    /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="key">キー</param>
-    /// <param name="cache">要素</param>
-    new bool TryAllocate(TKey key, out CacheProxy<TKey, TValue> cache);
+    /// <param name="value">振替値</param>
+    new CacheProxy<TKey, TValue> Transfer(TKey key, TValue value);
 
     /// <summary>
-    /// 指定したキーで要素を削除します。
+    /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="key">キー</param>
-    new bool Remove(TKey key);
+    /// <param name="func">振替値を取得する処理</param>
+    new CacheProxy<TKey, TValue> Transfer(TKey key, Func<TValue> func);
 
     /// <summary>
-    /// 指定したキーの一覧から要素を削除します。
+    /// 指定したキーで要素を解除します。
+    /// </summary>
+    /// <param name="key">キー</param>
+    new bool Release(TKey key);
+
+    /// <summary>
+    /// 指定したキーの一覧から要素を解除します。
     /// </summary>
     /// <param name="keys">キーの一覧</param>
-    new void Remove(IEnumerable<TKey> keys);
-
-    /// <summary>
-    /// 指定した要素を登録または更新します。
-    /// </summary>
-    /// <param name="key">キー</param>
-    /// <param name="value">登録する要素</param>
-    new void AddOrUpdate(TKey key, TValue value);
+    new void Release(IEnumerable<TKey> keys);
 }
 
 internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
@@ -174,18 +174,18 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         IDataSourceMonitoring<TKey> monitoring = null,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
-        CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
+        CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
     {
         KeyBuilder = keyBuilder;
         ValueBuilder = valueBuilder;
         Monitoring = monitoring;
-        if (Monitoring != null)
+        if (Monitoring is not null)
         {
             Monitoring.DataSourceChanged += OnDataSourceChanged;
         }
         MaxCapacity = maxCapacity ?? 0;
         Timeout = timeout ?? TimeSpan.Zero;
-        TimeoutBehaivor = timeoutBehaivor ?? CacheValueTimeoutBehaivor.None;
+        TimeoutBehaivor = timeoutBehaivor ?? CacheTimeoutBehaivor.Reset;
     }
 
     ~InternalCacheStore()
@@ -194,69 +194,55 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         lockSlim.Dispose();
     }
 
-    private CacheProxy<TKey, TValue> AddCachProxy(TKey key, Func<CacheValue<TValue>> getValueCallback)
+    private CacheProxy<TKey, TValue> Add(TKey key, Func<CacheValue<TValue>> getValueCallback)
     {
         if (HasMaxCapacity && cacheProxies.Count >= MaxCapacity)
         {
             // 最大容量を超えるときは、最初の要素を削除します。
             cacheProxies.RemoveAt(0);
         }
-        var item = new CacheProxy<TKey, TValue>()
-        {
-            Timeout = Timeout,
-            Key = key,
-            GetValueCallBack = getValueCallback,
-        };
-        if (HasTimeout)
-        {
-            switch (TimeoutBehaivor)
-            {
-                case CacheValueTimeoutBehaivor.Remove:
-                    item.TimedOutCallBack = () => Remove(key);
-                    break;
-                case CacheValueTimeoutBehaivor.Reset:
-                    item.TimedOutCallBack = () => item.Reset().Status == CacheStatus.Virtual;
-                    break;
-                case CacheValueTimeoutBehaivor.None:
-                default:
-                    break;
-            }
-        }
-        cacheProxies.Add(item);
-        return item;
-    }
 
-    public void AddOrUpdate(TKeyed keyed, TValue value)
-    {
-        if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
-        using (lockSlim.Scope(LockStatus.UpgradeableRead))
+        CacheProxy<TKey, TValue> cacheProxy = new()
         {
-            var key = KeyBuilder.GetKey(keyed);
-            cacheProxies.Remove(key);
-            using (lockSlim.Scope(LockStatus.Write))
-            {
-                AddCachProxy(key, () => new CacheValue<TValue>()
-                {
-                    Value = value,
-                    Cached = DateTimeOffset.Now,
-                });
-            }
+            Key = key,
+            Timeout = Timeout,
+            TimeoutBehaivor = TimeoutBehaivor,
+            GetValueCallBack = getValueCallback,
+            InStockCallBack = () => cacheProxies.Contains(key),
+        };
+
+        switch (TimeoutBehaivor)
+        {
+            case CacheTimeoutBehaivor.Release:
+                cacheProxy.TimedOutCallBack = () => Release(key);
+                break;
+            case CacheTimeoutBehaivor.Reset:
+                cacheProxy.TimedOutCallBack = () => cacheProxy.Reset().Status is CacheStatus.Virtual;
+                break;
+            case CacheTimeoutBehaivor.None:
+            default:
+                break;
         }
+
+        cacheProxies.Add(cacheProxy);
+        return cacheProxy;
     }
 
     public CacheProxy<TKey, TValue> Allocate(TKeyed keyed)
     {
         if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
+
         using (lockSlim.Scope(LockStatus.UpgradeableRead))
         {
             var key = KeyBuilder.GetKey(keyed);
             if (cacheProxies.Contains(key)) { return cacheProxies[key]; }
+
             using (lockSlim.Scope(LockStatus.Write))
             {
-                var proxy = AddCachProxy(key, () => new CacheValue<TValue>
+                var proxy = Add(key, () => new CacheValue<TValue>
                 {
                     Value = ValueBuilder.GetValue(keyed),
-                    Cached = DateTimeOffset.Now,
+                    CachedAt = DateTimeOffset.Now,
                 });
                 return proxy;
             }
@@ -265,24 +251,44 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
     public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds)
     {
-        if (keyeds == null)
-        {
-            return Enumerable.
-                Empty<CacheProxy<TKey, TValue>>().
-                ToArray();
-        }
-        else
-        {
-            return keyeds.
-                Select(x => Allocate(x)).
-                ToArray();
-        }
+        return keyeds is null
+            ? Enumerable.Empty<CacheProxy<TKey, TValue>>().ToArray()
+            : keyeds.Select(x => Allocate(x)).ToArray();
     }
 
-    public bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache)
+    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value) => Transfer(keyed, () => value);
+
+    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func)
     {
-        cache = keyed == null ? null : Allocate(keyed);
-        return cache != null;
+        if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
+
+        using (lockSlim.Scope(LockStatus.UpgradeableRead))
+        {
+            var key = KeyBuilder.GetKey(keyed);
+            if (!cacheProxies.TryGetValue(key, out var cacheProxy))
+            {
+                using (lockSlim.Scope(LockStatus.Write))
+                {
+                    cacheProxy = Add(key, () => new CacheValue<TValue>()
+                    {
+                        Value = func is null ? default : func(),
+                        CachedAt = DateTimeOffset.Now,
+                    });
+                }
+            }
+
+            cacheProxy.Transfer(proxy =>
+            {
+                proxy.Reset();
+                proxy.GetValueCallBack = () => new CacheValue<TValue>()
+                {
+                    Value = func is null ? default : func(),
+                    CachedAt = DateTimeOffset.Now,
+                };
+            });
+
+            return cacheProxy;
+        }
     }
 
     public void Clear()
@@ -295,14 +301,14 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
     public void Reset(IEnumerable<TKey> keys)
     {
-        if (keys == null) { return; }
+        if (keys is null) { return; }
 
         using (lockSlim.Scope(LockStatus.Read))
         {
             foreach (var cache in cacheProxies.Join(keys, x => x.Key, y => y, (x, y) => x))
             {
                 cache.Reset();
-            };
+            }
         }
     }
 
@@ -317,9 +323,9 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    private bool Remove(TKey key)
+    private bool Release(TKey key)
     {
-        if (key == null) { return false; }
+        if (key is null) { return false; }
 
         using (lockSlim.Scope(LockStatus.Write))
         {
@@ -327,9 +333,9 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    private void Remove(IEnumerable<TKey> keys)
+    private void Release(IEnumerable<TKey> keys)
     {
-        if (keys == null) { return; }
+        if (keys is null) { return; }
 
         using (lockSlim.Scope(LockStatus.Write))
         {
@@ -340,15 +346,15 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    public bool Remove(TKeyed keyed) => Remove(KeyBuilder.GetKey(keyed));
+    public bool Release(TKeyed keyed) => Release(KeyBuilder.GetKey(keyed));
 
-    public void Remove(IEnumerable<TKeyed> keyeds) => Remove(keyeds.Select(x => KeyBuilder.GetKey(x)));
+    public void Release(IEnumerable<TKeyed> keyeds) => Release(keyeds.Select(x => KeyBuilder.GetKey(x)));
 
     public void TrimExcess()
     {
         using (lockSlim.Scope(LockStatus.Write))
         {
-            var items = cacheProxies.Where(x => x.Status == CacheStatus.Real && x.TimedOut == false).ToArray();
+            var items = cacheProxies.Where(x => x.Status is CacheStatus.Real && !x.TimedOut).ToArray();
             cacheProxies.Clear();
             foreach (var item in items)
             {
@@ -373,8 +379,8 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
                 Clear();
                 break;
 
-            case RefreshCacheWith.Remove:
-                if (e.Keys?.Length > 0) { Remove(e.Keys); }
+            case RefreshCacheWith.Release:
+                if (e.Keys?.Length > 0) { Release(e.Keys); }
                 break;
 
             case RefreshCacheWith.None:
@@ -393,12 +399,12 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
     public int Count => cacheProxies.Count;
     public IDataSourceMonitoring<TKey> Monitoring { get; internal set; }
-    public bool CanMonitoring => Monitoring != null;
+    public bool CanMonitoring => Monitoring is not null;
     public bool HasMaxCapacity => MaxCapacity > 0;
-    public bool HasTimeout => Timeout != TimeSpan.Zero;
+    public bool HasTimeout => Timeout > TimeSpan.Zero;
     public TimeSpan Timeout { get; set; } = TimeSpan.Zero;
     public int MaxCapacity { get; set; } = 0;
-    public CacheValueTimeoutBehaivor TimeoutBehaivor { get; set; } = CacheValueTimeoutBehaivor.None;
+    public CacheTimeoutBehaivor TimeoutBehaivor { get; set; } = CacheTimeoutBehaivor.Reset;
 }
 
 /// <summary>
@@ -418,15 +424,13 @@ public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
         };
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
+    /// <inheritdoc/>
     public CacheStore(
         Func<TKey, TValue> valueBuilder,
         IDataSourceMonitoring<TKey> monitoring = null,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
-        CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
+        CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
     {
         Internal = new InternalCacheStore<TKey, TKey, TValue>(
             new FuncCacheKeyFactory<TKey, TKey>
@@ -443,104 +447,59 @@ public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
             timeoutBehaivor);
     }
 
-    /// <summary>
-    /// 要素の最大保持量を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public int MaxCapacity { get => Internal.MaxCapacity; set => Internal.MaxCapacity = value; }
 
-    /// <summary>
-    /// /最大保持量を持っているかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool HasMaxCapacity => Internal.HasMaxCapacity;
 
-    /// <summary>
-    /// 要素の保持期間を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public TimeSpan Timeout { get => Internal.Timeout; set => Internal.Timeout = value; }
 
-    /// <summary>
-    /// 保持期間を持っているかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool HasTimeout => Internal.HasTimeout;
 
-    /// <summary>
-    /// 保持期間を過ぎた際の挙動を取得します。
-    /// </summary>
-    public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
+    /// <inheritdoc/>
+    public CacheTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
 
-    /// <summary>
-    /// データソース監視オブジェクトを取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
 
-    /// <summary>
-    /// データソース監視ができるかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool CanMonitoring => Internal.CanMonitoring;
 
-    /// <summary>
-    /// 要素の一覧を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
 
-    /// <summary>
-    /// 要素の保持数を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public int Count => Internal.Count;
 
-    /// <summary>
-    /// 保持している要素すべて削除します。
-    /// </summary>
+    /// <inheritdoc/>
     public void Clear() => Internal.Clear();
 
-    /// <summary>
-    /// <para>保持している要素を圧縮して整理します。</para>
-    /// <para>この操作は、実要素を保持していない要素を削除します。</para>
-    /// </summary>
+    /// <inheritdoc/>
     public void TrimExcess() => Internal.TrimExcess();
 
-    /// <summary>
-    /// すべての要素をリセットします。
-    /// </summary>
+    /// <inheritdoc/>
     public void Reset() => Internal.Reset();
 
-    /// <summary>
-    /// 指定したキーで要素を引き当てます。
-    /// </summary>
-    /// <param name="key">要素を選別するキー</param>
+    /// <inheritdoc/>
     public CacheProxy<TKey, TValue> Allocate(TKey key) => Internal.Allocate(key);
 
-    /// <summary>
-    /// 指定したキーの一覧に一致する要素を引き当てます。
-    /// </summary>
-    /// <param name="keys">キーの一覧</param>
+    /// <inheritdoc/>
     public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys) => Internal.Allocate(keys);
 
-    /// <summary>
-    /// 指定したキーで要素の引当を試みます。
-    /// </summary>
-    /// <param name="key">要素を選別するキー</param>
-    /// <param name="cache">要素</param>
-    public bool TryAllocate(TKey key, out CacheProxy<TKey, TValue> cache) => Internal.TryAllocate(key, out cache);
+    /// <inheritdoc/>
+    public CacheProxy<TKey, TValue> Transfer(TKey key, TValue value) => Internal.Transfer(key, value);
 
-    /// <summary>
-    /// 指定したキーで要素を削除します。
-    /// </summary>
-    /// <param name="key">要素を識別するキー</param>
-    public bool Remove(TKey key) => Internal.Remove(key);
+    /// <inheritdoc/>
+    public CacheProxy<TKey, TValue> Transfer(TKey key, Func<TValue> func) => Internal.Transfer(key, func);
 
-    /// <summary>
-    /// 指定したキーの一覧に一致する要素を削除します。
-    /// </summary>
-    /// <param name="keys">キーの一覧</param>
-    public void Remove(IEnumerable<TKey> keys) => Internal.Remove(keys);
+    /// <inheritdoc/>
+    public bool Release(TKey key) => Internal.Release(key);
 
-    /// <summary>
-    /// 指定した要素を登録します。
-    /// </summary>
-    /// <param name="key">要素のキー</param>
-    /// <param name="value">登録する要素</param>
-    public void AddOrUpdate(TKey key, TValue value) => Internal.AddOrUpdate(key, value);
+    /// <inheritdoc/>
+    public void Release(IEnumerable<TKey> keys) => Internal.Release(keys);
 }
 
 /// <summary>
@@ -558,16 +517,14 @@ public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey,
         Internal = new InternalCacheStore<TKeyed, TKey, TValue>();
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
+    /// <inheritdoc/>
     public CacheStore(
         Func<TKeyed, TKey> keyBuilder,
         Func<TKeyed, TValue> valueBuilder,
         IDataSourceMonitoring<TKey> monitoring = null,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
-        CacheValueTimeoutBehaivor? timeoutBehaivor = CacheValueTimeoutBehaivor.Reset)
+        CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
     {
         Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
             new FuncCacheKeyFactory<TKeyed, TKey>
@@ -584,102 +541,57 @@ public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey,
             timeoutBehaivor);
     }
 
-    /// <summary>
-    /// 要素の最大保持量を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public int MaxCapacity { get => Internal.MaxCapacity; set => Internal.MaxCapacity = value; }
 
-    /// <summary>
-    /// /最大保持量を持っているかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool HasMaxCapacity => Internal.HasMaxCapacity;
 
-    /// <summary>
-    /// 要素の保持期間を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public TimeSpan Timeout { get => Internal.Timeout; set => Internal.Timeout = value; }
 
-    /// <summary>
-    /// 保持期間を持っているかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool HasTimeout => Internal.HasTimeout;
 
-    /// <summary>
-    /// 保持期間を過ぎた際の挙動を取得します。
-    /// </summary>
-    public CacheValueTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
+    /// <inheritdoc/>
+    public CacheTimeoutBehaivor TimeoutBehaivor { get => Internal.TimeoutBehaivor; set => Internal.TimeoutBehaivor = value; }
 
-    /// <summary>
-    /// データソース監視オブジェクトを取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public IDataSourceMonitoring<TKey> Monitoring { get => Internal.Monitoring; internal set => Internal.Monitoring = value; }
 
-    /// <summary>
-    /// データソース監視ができるかどうかを示す値を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public bool CanMonitoring => Internal.CanMonitoring;
 
-    /// <summary>
-    /// 要素の一覧を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
 
-    /// <summary>
-    /// 要素の保持数を取得します。
-    /// </summary>
+    /// <inheritdoc/>
     public int Count => Internal.Count;
 
-    /// <summary>
-    /// 保持している要素すべて削除します。
-    /// </summary>
+    /// <inheritdoc/>
     public void Clear() => Internal.Clear();
 
-    /// <summary>
-    /// <para>保持している要素を圧縮して整理します。</para>
-    /// <para>この操作は、実要素を保持していない要素を削除します。</para>
-    /// </summary>
+    /// <inheritdoc/>
     public void TrimExcess() => Internal.TrimExcess();
 
-    /// <summary>
-    /// すべての要素をリセットします。
-    /// </summary>
+    /// <inheritdoc/>
     public void Reset() => Internal.Reset();
 
-    /// <summary>
-    /// 指定したオブジェクトから要素を引き当てます。
-    /// </summary>
-    /// <param name="keyed">キーを保有するオブジェクト</param>
+    /// <inheritdoc/>
     public CacheProxy<TKey, TValue> Allocate(TKeyed keyed) => Internal.Allocate(keyed);
 
-    /// <summary>
-    /// 指定したオブジェクトの一覧から要素を引き当てます。
-    /// </summary>
-    /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
+    /// <inheritdoc/>
     public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds) => Internal.Allocate(keyeds);
 
-    /// <summary>
-    /// 指定したオブジェクトで要素の引当を試みます。
-    /// </summary>
-    /// <param name="keyed">キーを保有するオブジェクト</param>
-    /// <param name="cache">要素</param>
-    public bool TryAllocate(TKeyed keyed, out CacheProxy<TKey, TValue> cache) => Internal.TryAllocate(keyed, out cache);
+    /// <inheritdoc/>
+    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value) => Internal.Transfer(keyed, value);
 
-    /// <summary>
-    /// 指定したオブジェクトで要素を削除します。
-    /// </summary>
-    /// <param name="keyed">キーを保有するオブジェクト</param>
-    public bool Remove(TKeyed keyed) => Internal.Remove(keyed);
+    /// <inheritdoc/>
+    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func) => Internal.Transfer(keyed, func);
 
-    /// <summary>
-    /// 指定したオブジェクトの一覧から要素を削除します。
-    /// </summary>
-    /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-    public void Remove(IEnumerable<TKeyed> keyeds) => Internal.Remove(keyeds);
+    /// <inheritdoc/>
+    public bool Release(TKeyed keyed) => Internal.Release(keyed);
 
-    /// <summary>
-    /// 指定した要素を登録します。
-    /// </summary>
-    /// <param name="keyed">キーを保有するオブジェクト</param>
-    /// <param name="value">登録する要素</param>
-    public void AddOrUpdate(TKeyed keyed, TValue value) => Internal.AddOrUpdate(keyed, value);
+    /// <inheritdoc/>
+    public void Release(IEnumerable<TKeyed> keyeds) => Internal.Release(keyeds);
 }

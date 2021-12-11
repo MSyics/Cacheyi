@@ -18,12 +18,12 @@ public interface ICacheStoreSettings
     /// <summary>
     /// 保持期間を過ぎた際の挙動を取得または設定します。
     /// </summary>
-    CacheValueTimeoutBehaivor? TimeoutBehavior { get; set; }
+    CacheTimeoutBehaivor? TimeoutBehavior { get; set; }
 }
 
 internal class CacheStoreSettings : ICacheStoreSettings
 {
     public int? MaxCapacity { get; set; }
     public TimeSpan? Timeout { get; set; }
-    public CacheValueTimeoutBehaivor? TimeoutBehavior { get; set; }
+    public CacheTimeoutBehaivor? TimeoutBehavior { get; set; } = CacheTimeoutBehaivor.Reset;
 }

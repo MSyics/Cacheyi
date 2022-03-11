@@ -11,8 +11,8 @@ internal static partial class ThreadingExtensions
     /// <param name="timeout">遅延時間</param>
     public static TaskCompletionSource<T> StartNewTimer<T>(this Func<T> func, TimeSpan timeout)
     {
-        var tcs = new TaskCompletionSource<T>();
-        var timer = new Timer(x =>
+        TaskCompletionSource<T> tcs = new();
+        Timer timer = new(x =>
         {
             if (tcs.Task.IsCompleted) return;
             try
@@ -36,23 +36,18 @@ internal static partial class ThreadingExtensions
 {
     public static IDisposable Scope(this ReaderWriterLockSlim lockSlim, LockStatus status)
     {
-        var scope = new ReaderWriterLockSlimScope
-        {
-            LockSlim = lockSlim,
-            Status = status,
-        };
+        ReaderWriterLockSlimScope scope = new(lockSlim, status);
         scope.Enter();
         return scope;
     }
 }
 
-internal class ReaderWriterLockSlimScope : IDisposable
+internal record struct ReaderWriterLockSlimScope(ReaderWriterLockSlim LockSlim, LockStatus Status) : IDisposable
 {
-    public ReaderWriterLockSlim LockSlim { get; set; }
-    public LockStatus Status { get; set; } = LockStatus.None;
-
     public void Enter()
     {
+        if (LockSlim is null) { return; }
+
         switch (Status)
         {
             case LockStatus.UpgradeableRead:
@@ -72,6 +67,8 @@ internal class ReaderWriterLockSlimScope : IDisposable
 
     public void Exit()
     {
+        if (LockSlim is null) { return; }
+
         switch (Status)
         {
             case LockStatus.UpgradeableRead:
@@ -87,6 +84,8 @@ internal class ReaderWriterLockSlimScope : IDisposable
             default:
                 break;
         }
+
+        LockSlim = null;
     }
 
     public void Dispose() => Exit();

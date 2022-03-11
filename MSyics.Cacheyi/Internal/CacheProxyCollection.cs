@@ -2,14 +2,15 @@
 
 namespace MSyics.Cacheyi;
 
-internal sealed class CacheProxyCollection<TKey, TValue> : KeyedCollection<TKey, CacheProxy<TKey, TValue>>
+internal sealed class CacheProxyCollection<TKey, TItem> : KeyedCollection<TKey, TItem>
+    where TItem : IKeyed<TKey>
 {
     public CacheProxyCollection() : base(null, 0) { }
 
-    protected override TKey GetKeyForItem(CacheProxy<TKey, TValue> item) => item.Key;
+    protected override TKey GetKeyForItem(TItem item) => item.Key;
 
 #if NETSTANDARD2_0
-    public bool TryGetValue(TKey key, out CacheProxy<TKey, TValue> item)
+    public bool TryGetValue(TKey key, out TItem item)
     {
         if (Contains(key))
         {
@@ -18,7 +19,7 @@ internal sealed class CacheProxyCollection<TKey, TValue> : KeyedCollection<TKey,
         }
         else
         {
-            item = null;
+            item = default;
             return false;
         }
     }

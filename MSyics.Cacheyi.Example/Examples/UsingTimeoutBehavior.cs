@@ -84,7 +84,7 @@ namespace MSyics.Cacheyi.Examples
                         settings.Timeout = timeout;
                         settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",
@@ -97,7 +97,7 @@ namespace MSyics.Cacheyi.Examples
                         settings.Timeout = timeout;
                         settings.TimeoutBehavior = CacheTimeoutBehaivor.Release;
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",
@@ -110,7 +110,7 @@ namespace MSyics.Cacheyi.Examples
                         settings.Timeout = timeout;
                         settings.TimeoutBehavior = CacheTimeoutBehaivor.Reset;
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",

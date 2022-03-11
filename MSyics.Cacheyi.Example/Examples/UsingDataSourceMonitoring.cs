@@ -53,7 +53,7 @@ namespace MSyics.Cacheyi.Examples
                     {
                     }).
                     WithMonitoring(new FileDataSourceMonitoring()).
-                    GetValue(key =>
+                    GetValue((key, _) =>
                     {
                         var items = File.ReadLines(filePath).Skip(key).FirstOrDefault()?.Split(",", StringSplitOptions.RemoveEmptyEntries);
                         if (items?.Length != 3) return null;
@@ -89,7 +89,7 @@ namespace MSyics.Cacheyi.Examples
         #region DataSourceMonitoring
         public class FileDataSourceMonitoring : IDataSourceMonitoring<int>
         {
-            private readonly FileSystemWatcher fileSystemWatcher = new FileSystemWatcher();
+            private readonly FileSystemWatcher fileSystemWatcher = new();
 
             public FileDataSourceMonitoring()
             {

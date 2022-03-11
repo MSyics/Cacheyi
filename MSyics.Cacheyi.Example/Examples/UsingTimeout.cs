@@ -49,7 +49,7 @@ namespace MSyics.Cacheyi.Examples
                     {
                         settings.Timeout = TimeSpan.FromMilliseconds(200);
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",

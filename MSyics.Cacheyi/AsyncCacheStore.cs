@@ -8,7 +8,7 @@ namespace MSyics.Cacheyi;
 /// <typeparam name="TKeyed">要素のキーを保有する型</typeparam>
 /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
 /// <typeparam name="TValue">要素の型</typeparam>
-public interface ICacheStore<TKeyed, TKey, TValue>
+public interface IAsyncCacheStore<TKeyed, TKey, TValue>
 {
     /// <summary>
     /// 要素の最大保持量を取得します。
@@ -48,7 +48,7 @@ public interface ICacheStore<TKeyed, TKey, TValue>
     /// <summary>
     /// 要素の一覧を取得します。
     /// </summary>
-    IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable();
+    IEnumerable<AsyncCacheProxy<TKey, TValue>> AsEnumerable();
 
     /// <summary>
     /// 要素の保持数を取得します。
@@ -69,40 +69,40 @@ public interface ICacheStore<TKeyed, TKey, TValue>
     /// <summary>
     /// すべての要素をリセットします。
     /// </summary>
-    void Reset();
+    Task ResetAsync();
 
     /// <summary>
     /// 指定したオブジェクトから要素を引き当てます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
-    CacheProxy<TKey, TValue> Allocate(TKeyed keyed);
+    AsyncCacheProxy<TKey, TValue> Allocate(TKeyed keyed);
 
     /// <summary>
     /// 指定したオブジェクトの一覧から要素を引き当てます。
     /// </summary>
     /// <param name="keyeds">キーを保有するオブジェクトの一覧</param>
-    CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds);
+    AsyncCacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds);
 
     /// <summary>
     /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
     /// <param name="func">振替値を取得する処理</param>
-    CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<CancellationToken, TValue> func);
+    ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<CancellationToken, Task<TValue>> func);
 
     /// <summary>
     /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
     /// <param name="func">振替値を取得する処理</param>
-    CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func);
+    ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<Task<TValue>> func);
 
     /// <summary>
     /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="keyed">キーを保有するオブジェクト</param>
     /// <param name="value">振替値</param>
-    CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value);
+    ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, TValue value);
 
     /// <summary>
     /// 指定したオブジェクトで要素を解除します。
@@ -122,40 +122,40 @@ public interface ICacheStore<TKeyed, TKey, TValue>
 /// </summary>
 /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
 /// <typeparam name="TValue">要素の型</typeparam>
-public interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
+public interface IAsyncCacheStore<TKey, TValue> : IAsyncCacheStore<TKey, TKey, TValue>
 {
     /// <summary>
     /// 指定したキーから要素を引き当てます。
     /// </summary>
     /// <param name="key">キー</param>
-    new CacheProxy<TKey, TValue> Allocate(TKey key);
+    new AsyncCacheProxy<TKey, TValue> Allocate(TKey key);
 
     /// <summary>
     /// 指定したキーの一覧から要素を引き当てます。
     /// </summary>
     /// <param name="keys">キーの一覧</param>
-    new CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys);
-
-    /// <summary>
-    /// 引当要素の値を振り替えます。
-    /// </summary>
-    /// <param name="key">キー</param>
-    /// <param name="func">振替値を取得する処理</param>
-    new CacheProxy<TKey, TValue> Transfer(TKey key, Func<CancellationToken, TValue> func);
-
-    /// <summary>
-    /// 引当要素の値を振り替えます。
-    /// </summary>
-    /// <param name="key">キー</param>
-    /// <param name="func">振替値を取得する処理</param>
-    new CacheProxy<TKey, TValue> Transfer(TKey key, Func<TValue> func);
+    new AsyncCacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys);
 
     /// <summary>
     /// 引当要素の値を振り替えます。
     /// </summary>
     /// <param name="key">キー</param>
     /// <param name="value">振替値</param>
-    new CacheProxy<TKey, TValue> Transfer(TKey key, TValue value);
+    new ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, TValue value);
+
+    /// <summary>
+    /// 引当要素の値を振り替えます。
+    /// </summary>
+    /// <param name="key">キー</param>
+    /// <param name="func">振替値を取得する処理</param>
+    new ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, Func<CancellationToken, Task<TValue>> func);
+
+    /// <summary>
+    /// 引当要素の値を振り替えます。
+    /// </summary>
+    /// <param name="key">キー</param>
+    /// <param name="func">振替値を取得する処理</param>
+    new ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, Func<Task<TValue>> func);
 
     /// <summary>
     /// 指定したキーで要素を解除します。
@@ -175,32 +175,32 @@ public interface ICacheStore<TKey, TValue> : ICacheStore<TKey, TKey, TValue>
 /// </summary>
 /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
 /// <typeparam name="TValue">要素の型</typeparam>
-public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
+public sealed class AsyncCacheStore<TKey, TValue> : IAsyncCacheStore<TKey, TValue>
 {
-    internal InternalCacheStore<TKey, TKey, TValue> Internal { get; }
+    internal InternalAsyncCacheStore<TKey, TKey, TValue> Internal { get; }
 
-    internal CacheStore()
+    internal AsyncCacheStore()
     {
-        Internal = new InternalCacheStore<TKey, TKey, TValue>
+        Internal = new InternalAsyncCacheStore<TKey, TKey, TValue>
         {
             KeyBuilder = new FuncCacheKeyFactory<TKey, TKey>() { Build = key => key }
         };
     }
 
     /// <inheritdoc/>
-    public CacheStore(
-        Func<TKey, CancellationToken, TValue> valueBuilder,
-        IDataSourceMonitoring<TKey> monitoring = default,
+    public AsyncCacheStore(
+        Func<TKey, CancellationToken, Task<TValue>> valueBuilder,
+        IDataSourceMonitoring<TKey> monitoring = null,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
         CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
     {
-        Internal = new InternalCacheStore<TKey, TKey, TValue>(
+        Internal = new InternalAsyncCacheStore<TKey, TKey, TValue>(
             new FuncCacheKeyFactory<TKey, TKey>
             {
                 Build = key => key
             },
-            new FuncCacheValueBuilder<TKey, TKey, TValue>
+            new FuncCacheValueBuilder<TKey, TKey, Task<TValue>>
             {
                 Build = (key, token) => valueBuilder(key, token)
             },
@@ -232,7 +232,7 @@ public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     public bool CanMonitoring => Internal.CanMonitoring;
 
     /// <inheritdoc/>
-    public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
+    public IEnumerable<AsyncCacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
 
     /// <inheritdoc/>
     public int Count => Internal.Count;
@@ -244,22 +244,22 @@ public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
     public void TrimExcess() => Internal.TrimExcess();
 
     /// <inheritdoc/>
-    public void Reset() => Internal.Reset();
+    public Task ResetAsync() => Internal.ResetAsync();
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Allocate(TKey key) => Internal.Allocate(key);
+    public AsyncCacheProxy<TKey, TValue> Allocate(TKey key) => Internal.Allocate(key);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys) => Internal.Allocate(keys);
+    public AsyncCacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKey> keys) => Internal.Allocate(keys);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKey key, Func<CancellationToken, TValue> func) => Internal.Transfer(key, func);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, Func<CancellationToken, Task<TValue>> func) => Internal.TransferAsync(key, func);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKey key, Func<TValue> func) => Internal.Transfer(key, func);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, Func<Task<TValue>> func) => Internal.TransferAsync(key, func);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKey key, TValue value) => Internal.Transfer(key, value);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKey key, TValue value) => Internal.TransferAsync(key, value);
 
     /// <inheritdoc/>
     public bool Release(TKey key) => Internal.Release(key);
@@ -274,30 +274,30 @@ public sealed class CacheStore<TKey, TValue> : ICacheStore<TKey, TValue>
 /// <typeparam name="TKeyed">要素のキーを保有する型</typeparam>
 /// <typeparam name="TKey">要素を選別するキーの型</typeparam>
 /// <typeparam name="TValue">要素の型</typeparam>
-public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>
+public sealed class AsyncCacheStore<TKeyed, TKey, TValue> : IAsyncCacheStore<TKeyed, TKey, TValue>
 {
-    internal InternalCacheStore<TKeyed, TKey, TValue> Internal { get; }
+    internal InternalAsyncCacheStore<TKeyed, TKey, TValue> Internal { get; }
 
-    internal CacheStore()
+    internal AsyncCacheStore()
     {
-        Internal = new InternalCacheStore<TKeyed, TKey, TValue>();
+        Internal = new InternalAsyncCacheStore<TKeyed, TKey, TValue>();
     }
 
     /// <inheritdoc/>
-    public CacheStore(
+    public AsyncCacheStore(
         Func<TKeyed, TKey> keyBuilder,
-        Func<TKeyed, CancellationToken, TValue> valueBuilder,
+        Func<TKeyed, CancellationToken, Task<TValue>> valueBuilder,
         IDataSourceMonitoring<TKey> monitoring = default,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
         CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
     {
-        Internal = new InternalCacheStore<TKeyed, TKey, TValue>(
+        Internal = new InternalAsyncCacheStore<TKeyed, TKey, TValue>(
             new FuncCacheKeyFactory<TKeyed, TKey>
             {
                 Build = keyBuilder
             },
-            new FuncCacheValueBuilder<TKeyed, TKey, TValue>
+            new FuncCacheValueBuilder<TKeyed, TKey, Task<TValue>>
             {
                 Build = valueBuilder
             },
@@ -329,7 +329,7 @@ public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey,
     public bool CanMonitoring => Internal.CanMonitoring;
 
     /// <inheritdoc/>
-    public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
+    public IEnumerable<AsyncCacheProxy<TKey, TValue>> AsEnumerable() => Internal.AsEnumerable();
 
     /// <inheritdoc/>
     public int Count => Internal.Count;
@@ -341,22 +341,22 @@ public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey,
     public void TrimExcess() => Internal.TrimExcess();
 
     /// <inheritdoc/>
-    public void Reset() => Internal.Reset();
+    public Task ResetAsync() => Internal.ResetAsync();
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Allocate(TKeyed keyed) => Internal.Allocate(keyed);
+    public AsyncCacheProxy<TKey, TValue> Allocate(TKeyed keyed) => Internal.Allocate(keyed);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds) => Internal.Allocate(keyeds);
+    public AsyncCacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds) => Internal.Allocate(keyeds);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value) => Internal.Transfer(keyed, value);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<CancellationToken, Task<TValue>> func) => Internal.TransferAsync(keyed, func);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<CancellationToken, TValue> func) => Internal.Transfer(keyed, func);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<Task<TValue>> func) => Internal.TransferAsync(keyed, func);
 
     /// <inheritdoc/>
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func) => Internal.Transfer(keyed, func);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, TValue value) => Internal.TransferAsync(keyed, value);
 
     /// <inheritdoc/>
     public bool Release(TKeyed keyed) => Internal.Release(keyed);
@@ -365,34 +365,22 @@ public sealed class CacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey,
     public void Release(IEnumerable<TKeyed> keyeds) => Internal.Release(keyeds);
 }
 
-internal interface IInternalAsyncCacheStore<TKeyed, TKey, TValue>
-{
-    void OnDataSourceChanged(object sender, DataSourceChangedEventArgs<TKey> e);
-
-    ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
-    ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
-    int MaxCapacity { get; set; }
-    IDataSourceMonitoring<TKey> Monitoring { get; set; }
-    TimeSpan Timeout { get; set; }
-    CacheTimeoutBehaivor TimeoutBehaivor { get; set; }
-}
-
-internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TKey, TValue>, IInternalAsyncCacheStore<TKeyed, TKey, TValue>
+internal class InternalAsyncCacheStore<TKeyed, TKey, TValue> : IAsyncCacheStore<TKeyed, TKey, TValue>, IInternalAsyncCacheStore<TKeyed, TKey, Task<TValue>>
 {
     public ICacheKeyBuilder<TKeyed, TKey> KeyBuilder { get; set; }
-    public ICacheValueBuilder<TKeyed, TKey, TValue> ValueBuilder { get; set; }
+    public ICacheValueBuilder<TKeyed, TKey, Task<TValue>> ValueBuilder { get; set; }
 
-    private readonly ReaderWriterLockSlim lockSlim = new();
-    private readonly CacheProxyCollection<TKey, CacheProxy<TKey, TValue>> cacheProxies = new();
+    private readonly ReaderWriterLockSlim lockSlim = new(LockRecursionPolicy.SupportsRecursion);
+    private readonly CacheProxyCollection<TKey, AsyncCacheProxy<TKey, TValue>> cacheProxies = new();
 
-    internal InternalCacheStore()
+    internal InternalAsyncCacheStore()
     {
     }
 
-    internal InternalCacheStore(
+    internal InternalAsyncCacheStore(
         ICacheKeyBuilder<TKeyed, TKey> keyBuilder,
-        ICacheValueBuilder<TKeyed, TKey, TValue> valueBuilder,
-        IDataSourceMonitoring<TKey> monitoring = default,
+        ICacheValueBuilder<TKeyed, TKey, Task<TValue>> valueBuilder,
+        IDataSourceMonitoring<TKey> monitoring = null,
         int? maxCapacity = null,
         TimeSpan? timeout = null,
         CacheTimeoutBehaivor? timeoutBehaivor = CacheTimeoutBehaivor.Reset)
@@ -409,13 +397,13 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         TimeoutBehaivor = timeoutBehaivor ?? CacheTimeoutBehaivor.Reset;
     }
 
-    ~InternalCacheStore()
+    ~InternalAsyncCacheStore()
     {
         if (CanMonitoring && Monitoring.Running) { Monitoring.Stop(); }
         lockSlim.Dispose();
     }
 
-    private CacheProxy<TKey, TValue> Add(TKey key, Func<CancellationToken, CacheValue<TValue>> getValueCallback)
+    private AsyncCacheProxy<TKey, TValue> Add(TKey key, Func<CancellationToken, Task<CacheValue<TValue>>> getValueCallbackAsync)
     {
         if (HasMaxCapacity && cacheProxies.Count >= MaxCapacity)
         {
@@ -423,22 +411,26 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
             cacheProxies.RemoveAt(0);
         }
 
-        CacheProxy<TKey, TValue> cacheProxy = new()
+        AsyncCacheProxy<TKey, TValue> cacheProxy = new()
         {
             Key = key,
             Timeout = Timeout,
             TimeoutBehaivor = TimeoutBehaivor,
-            GetValueCallBack = getValueCallback,
+            GetValueCallBackAsync = getValueCallbackAsync,
             InStockCallBack = () => cacheProxies.Contains(key),
         };
 
         switch (TimeoutBehaivor)
         {
             case CacheTimeoutBehaivor.Release:
-                cacheProxy.TimedOutCallBack = () => Release(key);
+                cacheProxy.TimedOutCallBackAsync = () => Task.FromResult(Release(key));
                 break;
             case CacheTimeoutBehaivor.Reset:
-                cacheProxy.TimedOutCallBack = () => cacheProxy.Reset().Status is CacheStatus.Virtual;
+                cacheProxy.TimedOutCallBackAsync = async () =>
+                {
+                    await cacheProxy.ResetAsync();
+                    return cacheProxy.Status is CacheStatus.Virtual;
+                };
                 break;
             case CacheTimeoutBehaivor.None:
             default:
@@ -449,7 +441,7 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         return cacheProxy;
     }
 
-    public CacheProxy<TKey, TValue> Allocate(TKeyed keyed)
+    public AsyncCacheProxy<TKey, TValue> Allocate(TKeyed keyed)
     {
         if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
 
@@ -460,9 +452,9 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
             using (lockSlim.Scope(LockStatus.Write))
             {
-                var proxy = Add(key, token => new CacheValue<TValue>
+                var proxy = Add(key, async token => new CacheValue<TValue>
                 {
-                    Value = ValueBuilder.GetValue(keyed, token),
+                    Value = await ValueBuilder.GetValue(keyed, token),
                     CachedAt = DateTimeOffset.Now,
                 });
                 return proxy;
@@ -470,14 +462,14 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    public CacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds)
+    public AsyncCacheProxy<TKey, TValue>[] Allocate(IEnumerable<TKeyed> keyeds)
     {
         return keyeds is null
-            ? Enumerable.Empty<CacheProxy<TKey, TValue>>().ToArray()
+            ? Enumerable.Empty<AsyncCacheProxy<TKey, TValue>>().ToArray()
             : keyeds.Select(x => Allocate(x)).ToArray();
     }
 
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<CancellationToken, TValue> func)
+    public async ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<CancellationToken, Task<TValue>> func)
     {
         if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
 
@@ -486,11 +478,11 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
             var key = KeyBuilder.GetKey(keyed);
             if (cacheProxies.TryGetValue(key, out var cacheProxy))
             {
-                cacheProxy!.Transfer(() =>
+                await cacheProxy!.TransferAsync(() =>
                 {
-                    cacheProxy.GetValueCallBack = token => new CacheValue<TValue>()
+                    cacheProxy.GetValueCallBackAsync = async token => new CacheValue<TValue>()
                     {
-                        Value = func(token),
+                        Value = await func(token),
                         CachedAt = DateTimeOffset.Now,
                     };
                 });
@@ -499,9 +491,9 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
             {
                 using (lockSlim.Scope(LockStatus.Write))
                 {
-                    cacheProxy = Add(key, token => new CacheValue<TValue>()
+                    cacheProxy = Add(key, async token => new CacheValue<TValue>()
                     {
-                        Value = func(token),
+                        Value = await func(token),
                         CachedAt = DateTimeOffset.Now,
                     });
                 }
@@ -511,9 +503,9 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, Func<TValue> func) => Transfer(keyed, _ => func());
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, Func<Task<TValue>> func) => TransferAsync(keyed, _ => func());
 
-    public CacheProxy<TKey, TValue> Transfer(TKeyed keyed, TValue value) => Transfer(keyed, _ => value);
+    public ValueTask<AsyncCacheProxy<TKey, TValue>> TransferAsync(TKeyed keyed, TValue value) => TransferAsync(keyed, _ => Task.FromResult(value));
 
     public void Clear()
     {
@@ -523,7 +515,7 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    private void Reset(IEnumerable<TKey> keys)
+    private async Task ResetAsync(IEnumerable<TKey> keys)
     {
         if (keys is null) { return; }
 
@@ -531,18 +523,18 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         {
             foreach (var cache in cacheProxies.Join(keys, x => x.Key, y => y, (x, y) => x))
             {
-                cache.Reset();
+                await cache.ResetAsync();
             }
         }
     }
 
-    public void Reset()
+    public async Task ResetAsync()
     {
         using (lockSlim.Scope(LockStatus.Read))
         {
             foreach (var cache in cacheProxies)
             {
-                cache.Reset();
+                await cache.ResetAsync();
             }
         }
     }
@@ -592,13 +584,13 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         switch (e.RefreshWith)
         {
             case RefreshCacheWith.Reset:
-                Reset();
+                _ = ResetAsync();
                 break;
 
             case RefreshCacheWith.ResetContains:
                 if (e.Keys?.Length > 0)
                 {
-                    Reset(e.Keys);
+                    _ = ResetAsync(e.Keys);
                 }
                 break;
 
@@ -619,7 +611,7 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
         }
     }
 
-    public IEnumerable<CacheProxy<TKey, TValue>> AsEnumerable()
+    public IEnumerable<AsyncCacheProxy<TKey, TValue>> AsEnumerable()
     {
         using (lockSlim.Scope(LockStatus.Read))
         {

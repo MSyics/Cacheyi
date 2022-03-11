@@ -13,7 +13,7 @@ public partial class ストアテスト
     public ストアテスト()
     {
         dataSource.AddRange(Enumerable.Range(0, 5).ToTestValue());
-        store = new CacheStore<int, TestValue>(key => dataSource.First(x => x.Key == key));
+        store = new CacheStore<int, TestValue>((key, _) => dataSource.First(x => x.Key == key));
     }
 
     [Theory]

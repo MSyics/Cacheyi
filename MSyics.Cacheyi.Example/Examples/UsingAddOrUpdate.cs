@@ -74,7 +74,7 @@ namespace MSyics.Cacheyi.Examples
                     {
                         settings.Timeout = TimeSpan.FromMilliseconds(100);
                     }).
-                    GetValue(key => null);
+                    GetValue((key, _) => null);
                 });
             }
 

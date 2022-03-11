@@ -43,7 +43,7 @@ namespace MSyics.Cacheyi.Examples
                     Settings(settings =>
                     {
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",

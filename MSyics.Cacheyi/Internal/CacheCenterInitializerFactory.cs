@@ -28,7 +28,14 @@ internal class CacheCenterInitializerFactory
             {
                 if (!x.PropertyType.IsGenericType) return false;
                 var type = x.PropertyType.GetGenericTypeDefinition();
-                return type.Equals(typeof(ICacheStore<,>)) || type.Equals(typeof(ICacheStore<,,>)) || type.Equals(typeof(CacheStore<,>)) || type.Equals(typeof(CacheStore<,,>));
+                return type.Equals(typeof(ICacheStore<,>))
+                    || type.Equals(typeof(ICacheStore<,,>))
+                    || type.Equals(typeof(CacheStore<,>))
+                    || type.Equals(typeof(CacheStore<,,>))
+                    || type.Equals(typeof(IAsyncCacheStore<,>))
+                    || type.Equals(typeof(IAsyncCacheStore<,,>))
+                    || type.Equals(typeof(AsyncCacheStore<,>))
+                    || type.Equals(typeof(AsyncCacheStore<,,>));
             });
 
         foreach (var item in properties)

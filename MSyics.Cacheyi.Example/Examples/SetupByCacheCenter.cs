@@ -73,7 +73,7 @@ namespace MSyics.Cacheyi.Examples
                     {
                         settings.MaxCapacity = 100;
                     }).
-                    GetValue(key => new Product
+                    GetValue((key, _) => new Product
                     {
                         Id = key,
                         Message = $"{key:000}",
@@ -86,7 +86,7 @@ namespace MSyics.Cacheyi.Examples
                         settings.MaxCapacity = 100;
                     }).
                     GetKey(x => x.Id).
-                    GetValue(p => new Product
+                    GetValue((p, _) => new Product
                     {
                         Id = p.Id,
                         Message = $"{p.Id:000}",

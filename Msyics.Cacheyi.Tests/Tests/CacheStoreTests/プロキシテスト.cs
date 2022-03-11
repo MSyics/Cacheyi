@@ -13,7 +13,7 @@ public partial class プロキシテスト
     public プロキシテスト()
     {
         dataSource.AddRange(Enumerable.Range(0, 5).ToTestValue());
-        store = new CacheStore<int, TestValue>(key => dataSource.First(x => x.Key == key));
+        store = new CacheStore<int, TestValue>((key, _) => dataSource.First(x => x.Key == key));
     }
 
     [Theory]
@@ -156,7 +156,6 @@ public partial class プロキシテスト
 
         Assert.Equal(CacheStatus.Real, cache.Status);
     }
-
 
     [Fact]
     public void When_ストア操作_取得_Expect_状態()

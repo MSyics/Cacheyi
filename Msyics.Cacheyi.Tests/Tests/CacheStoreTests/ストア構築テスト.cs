@@ -30,7 +30,7 @@ public partial class ストア構築テスト
     class StoresCacheCenter : CacheCenter
     {
         public ICacheStore<int, int> Store1 { get; private set; }
-        public ICacheStore<int, int> Store2 { get; private set; }
+        public ICacheStore<(int, int), int, int> Store2 { get; private set; }
 
         protected override void ConstructStore(CacheStoreDirector director)
         {
@@ -42,9 +42,18 @@ public partial class ストア構築テスト
                     settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
                 }).
                 WithMonitoring(new ObservableCollectionMonitoring()).
-                GetValue(x => x);
+                GetValue((x, _) => x);
 
-            director.Build(() => Store2).GetValue(x => x);
+            director.Build(() => Store2).
+                Settings(settings =>
+                {
+                    settings.MaxCapacity = int.MinValue;
+                    settings.Timeout = TimeSpan.MinValue;
+                    settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
+                }).
+                WithMonitoring(new ObservableCollectionMonitoring()).
+                GetKey(x => x.Item2).
+                GetValue((x, _) => x.Item2);
         }
     }
 
@@ -63,15 +72,67 @@ public partial class ストア構築テスト
     class StoresCenter
     {
         public ICacheStore<int, int> Store1 { get; private set; }
-        public ICacheStore<int, int> Store2 { get; private set; }
+        public ICacheStore<(int, int), int, int> Store2 { get; private set; }
 
         public StoresCenter()
         {
             CacheCenter.ConstructStore(this, director =>
             {
-                director.Build(() => Store1).GetValue(x => x);
-                director.Build(() => Store2).GetValue(x => x);
+                director.Build(() => Store1).
+                    Settings(settings =>
+                    {
+                        settings.MaxCapacity = int.MinValue;
+                        settings.Timeout = TimeSpan.MinValue;
+                        settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
+                    }).
+                    WithMonitoring(new ObservableCollectionMonitoring()).
+                    GetValue((x, _) => x);
+
+                director.Build(() => Store2).
+                    Settings(settings =>
+                    {
+                        settings.MaxCapacity = int.MinValue;
+                        settings.Timeout = TimeSpan.MinValue;
+                        settings.TimeoutBehavior = CacheTimeoutBehaivor.None;
+                    }).
+                    WithMonitoring(new ObservableCollectionMonitoring()).
+                    GetKey(x => x.Item2).
+                    GetValue((x, _) => x.Item2);
             });
+        }
+    }
+
+    [Fact]
+    public void When_センター未使用_Expect_不等()
+    {
+        Stores stores1 = new();
+        Stores stores2 = new();
+
+        Assert.NotEqual(stores1.Store1, stores2.Store1);
+        Assert.NotEqual(stores1.Store2, stores2.Store2);
+    }
+
+    class Stores
+    {
+        public ICacheStore<int, int> Store1 { get; private set; }
+        public ICacheStore<(int, int), int, int> Store2 { get; private set; }
+
+        public Stores()
+        {
+            Store1 = new CacheStore<int, int>(
+                valueBuilder: (_, __) => 0,
+                monitoring: new ObservableCollectionMonitoring(),
+                maxCapacity: 0,
+                timeout: TimeSpan.Zero,
+                timeoutBehaivor: CacheTimeoutBehaivor.None);
+
+            Store2 = new CacheStore<(int, int), int, int>(
+                keyBuilder: _ => 0,
+                valueBuilder: (_, __) => 0,
+                monitoring: new ObservableCollectionMonitoring(),
+                maxCapacity: 0,
+                timeout: TimeSpan.Zero,
+                timeoutBehaivor: CacheTimeoutBehaivor.None);
         }
     }
 
@@ -82,7 +143,7 @@ public partial class ストア構築テスト
     [InlineData(1, true)]
     public void When_最大容量_Expect_設定(int? maxCapacity, bool expected)
     {
-        var store = new CacheStore<int, int>(_ => _, maxCapacity: maxCapacity);
+        var store = new CacheStore<int, int>((_, __) => _, maxCapacity: maxCapacity);
 
         testOutput.WriteLine($"MaxCapacity:{store.MaxCapacity}");
         Assert.Equal(expected, store.HasMaxCapacity);
@@ -92,7 +153,7 @@ public partial class ストア構築テスト
     [MemberData(nameof(When_タイムアウト_Expect_設定_Case))]
     public void When_タイムアウト_Expect_設定(TimeSpan? timeout, bool expected)
     {
-        var store = new CacheStore<int, int>(_ => _, timeout: timeout);
+        var store = new CacheStore<int, int>((_, __) => _, timeout: timeout);
 
         testOutput.WriteLine($"Timeout:{store.Timeout}");
         Assert.Equal(expected, store.HasTimeout);
@@ -110,7 +171,7 @@ public partial class ストア構築テスト
     [MemberData(nameof(When_モニタリング_Expect_設定_Case))]
     public void When_モニタリング_Expect_設定(IDataSourceMonitoring<int>? monitoring, bool expected)
     {
-        var store = new CacheStore<int, int>(_ => _, monitoring: monitoring);
+        var store = new CacheStore<int, int>((_, __) => _, monitoring: monitoring);
 
         Assert.Equal(expected, store.CanMonitoring);
         Assert.Equal(monitoring, store.Monitoring);

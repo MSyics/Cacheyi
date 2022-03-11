@@ -13,7 +13,7 @@ public partial class 振替プロキシテスト
     public 振替プロキシテスト()
     {
         dataSource.AddRange(Enumerable.Range(0, 5).ToTestValue());
-        store = new CacheStore<int, TestValue>(key => dataSource.First(x => x.Key == key));
+        store = new CacheStore<int, TestValue>((key, _) => dataSource.First(x => x.Key == key));
     }
 
     [Fact]

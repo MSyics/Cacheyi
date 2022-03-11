@@ -38,7 +38,7 @@ class SetupForInjection : Example
         public ProductCenter()
         {
             Products = new CacheStore<int, Product>(
-                valueBuilder: key => new Product
+                valueBuilder: (key, _) => new Product
                 {
                     Id = key,
                     Message = $"{key:000}",

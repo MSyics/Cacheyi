@@ -10,7 +10,8 @@ public partial class 複合テスト
 {
     readonly ITestOutputHelper testOutput;
     readonly ObservableCollection<TestValue> dataSource = new();
-    IAsyncCacheStore<int, TestValue> store;
+    ICacheStore<int, TestValue> store;
+    IAsyncCacheStore<int, TestValue> asyncStore;
 
     class Stores : CacheCenter
     {
@@ -48,23 +49,59 @@ public partial class 複合テスト
     }
 
     [Fact]
-    public async Task When_クリアリセット_Expect_非同期()
+    public async Task When_ごちゃまぜ_Expect_非同期()
     {
-        store = new AsyncCacheStore<int, TestValue>(
-            valueBuilder: (key, _) => Task.Run(() => dataSource.First(x => x.Key == key)),
+        asyncStore = new AsyncCacheStore<int, TestValue>(
+            valueBuilder: (key, _) => Task.Run(() => new TestValue(key, key)),
             monitoring: new ObservableCollectionMonitoring(),
-            maxCapacity: 1,
-            timeout: TimeSpan.FromMilliseconds(1),
+            maxCapacity: 0,
+            timeout: TimeSpan.FromMilliseconds(10),
             timeoutBehaivor: CacheTimeoutBehaivor.Reset);
 
         await Task.WhenAll(
-            Task.WhenAll(Enumerable.Range(1, 1000).Select(_ => Task.Run(store.Clear))),
-            Task.WhenAll(Enumerable.Range(1, 1000).Select(_ => store.ResetAsync())),
-            Task.WhenAll(Enumerable.Range(1, 1000).Select(_ => Task.Run(() => store.TransferAsync(0, new TestValue(1))))),
-            Task.WhenAll(Enumerable.Range(1, 1000).Select(_ => store.Allocate(0).ResetAsync())),
-            Task.WhenAll(Enumerable.Range(1, 1000).Select(_ => store.Allocate(0).GetValueAsync().AsTask())));
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => asyncStore.Allocate(0).GetValueAsync().AsTask())),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => asyncStore.Allocate(Enumerable.Range(0, 100)).Select(x => x.GetValueAsync().AsTask())).SelectMany(x => x)),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => asyncStore.Allocate(Enumerable.Range(0, 100)).Select(x => x.TryGetValueAsync().AsTask())).SelectMany(x => x)),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => asyncStore.Transfer(0, new TestValue(1))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => asyncStore.Transfer(0, () => Task.Run(() => new TestValue(1)))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => asyncStore.Transfer(0, async token => await Task.Run(() => new TestValue(1)))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(asyncStore.Allocate(0).Reset))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(asyncStore.Reset))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(asyncStore.Clear))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(asyncStore.TrimExcess))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(asyncStore.AsEnumerable))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => asyncStore.Release(0)))));
 
-        var actual = await store.Allocate(0).GetValueAsync();
+        var actual = await asyncStore.Allocate(0).GetValueAsync();
+
+        Assert.Equal(0, actual.Value);
+    }
+
+    [Fact]
+    public async Task When_ごちゃまぜ_Expect_同期()
+    {
+        store = new CacheStore<int, TestValue>(
+            valueBuilder: (key, _) => new TestValue(key, key),
+            monitoring: new ObservableCollectionMonitoring(),
+            maxCapacity: 0,
+            timeout: TimeSpan.FromMilliseconds(10),
+            timeoutBehaivor: CacheTimeoutBehaivor.Reset);
+
+        await Task.WhenAll(
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Allocate(0).GetValue()))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Allocate(Enumerable.Range(0, 100)).Select(x => x.GetValue())))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Allocate(Enumerable.Range(0, 100)).Select(x => x.TryGetValue(out var _))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Transfer(0, new TestValue(1))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Transfer(0, () => new TestValue(1))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Transfer(0, token => new TestValue(1))))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(store.Allocate(0).Reset))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(store.Reset))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(store.Clear))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(store.TrimExcess))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(store.AsEnumerable))),
+        Task.WhenAll(Enumerable.Range(1, 2000).Select(_ => Task.Run(() => store.Release(0)))));
+
+        var actual = store.Allocate(0).GetValue();
 
         Assert.Equal(0, actual.Value);
     }

@@ -7,7 +7,7 @@ internal sealed class AsyncLock
 
     public AsyncLock()
     {
-        releaser = new Releasable(this);
+        releaser = new Releasable(semaphore);
     }
 
     public async ValueTask<IDisposable> LockAsync(CancellationToken cancellationToken = default)
@@ -31,10 +31,10 @@ internal sealed class AsyncLock
         }
     }
 
-    private struct Releasable : IDisposable
+    private class Releasable : IDisposable
     {
-        readonly AsyncLock target;
-        public Releasable(AsyncLock target) { this.target = target; }
-        public void Dispose() { target.semaphore.Release(); }
+        readonly SemaphoreSlim semaphore;
+        public Releasable(SemaphoreSlim semaphore) { this.semaphore = semaphore; }
+        public void Dispose() { semaphore.Release(); }
     }
 }

@@ -8,8 +8,12 @@
 public sealed class CacheProxy<TKey, TValue> : IKeyed<TKey>
 {
     private readonly object lockObj = new();
+    private readonly CacheProxyCollection<TKey, CacheProxy<TKey, TValue>> cacheProxies;
 
-    internal CacheProxy() { }
+    internal CacheProxy(CacheProxyCollection<TKey, CacheProxy<TKey, TValue>> cacheProxies)
+    {
+        this.cacheProxies = cacheProxies;
+    }
 
     /// <summary>
     /// 要素を取得します。
@@ -85,12 +89,12 @@ public sealed class CacheProxy<TKey, TValue> : IKeyed<TKey>
         }
     }
 
-    internal void Transfer(Action action)
+    internal void Transfer(Func<CancellationToken, TValue> func, Action<CacheProxy<TKey, TValue>, Func<CancellationToken, TValue>> action)
     {
         lock (lockObj)
         {
             ResetCore();
-            action?.Invoke();
+            action?.Invoke(this, func);
         }
     }
 
@@ -106,12 +110,12 @@ public sealed class CacheProxy<TKey, TValue> : IKeyed<TKey>
     {
         get
         {
-            if (Status != CacheStatus.Real) { return false; }
-
-            DateTimeOffset? offset = CacheValue?.CachedAt.Add(Timeout);
-            if (offset is null) { return false; }
-
-            return HasTimeout && DateTimeOffset.Now >= offset;
+            lock (lockObj)
+            {
+                if (Status != CacheStatus.Real) { return false; }
+                DateTimeOffset offset = CacheValue.CachedAt.Add(Timeout);
+                return HasTimeout && DateTimeOffset.Now >= offset;
+            }
         }
     }
 
@@ -138,11 +142,10 @@ public sealed class CacheProxy<TKey, TValue> : IKeyed<TKey>
     /// <summary>
     /// Store に存在するかどうかを示す値を取得します。存在する場合は true、それ以外は false を返します。
     /// </summary>
-    public bool InStock => InStockCallBack?.Invoke() ?? false;
+    public bool InStock => cacheProxies.Contains(Key);
 
     internal CacheValue<TValue> CacheValue { get; set; }
     internal Func<CancellationToken, CacheValue<TValue>> GetValueCallBack { get; set; }
     internal Func<bool> TimedOutCallBack { get; set; }
     internal TaskCompletionSource<bool> CancellingTimeout { get; set; }
-    internal Func<bool> InStockCallBack { get; set; }
 }

@@ -423,13 +423,12 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
             cacheProxies.RemoveAt(0);
         }
 
-        CacheProxy<TKey, TValue> cacheProxy = new()
+        CacheProxy<TKey, TValue> cacheProxy = new(cacheProxies)
         {
             Key = key,
             Timeout = Timeout,
             TimeoutBehaivor = TimeoutBehaivor,
             GetValueCallBack = getValueCallback,
-            InStockCallBack = () => cacheProxies.Contains(key),
         };
 
         switch (TimeoutBehaivor)
@@ -453,19 +452,14 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
     {
         if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
 
+        var key = KeyBuilder.GetKey(keyed);
         using (lockSlim.Scope(LockStatus.UpgradeableRead))
         {
-            var key = KeyBuilder.GetKey(keyed);
             if (cacheProxies.Contains(key)) { return cacheProxies[key]; }
 
             using (lockSlim.Scope(LockStatus.Write))
             {
-                var proxy = Add(key, token => new CacheValue<TValue>
-                {
-                    Value = ValueBuilder.GetValue(keyed, token),
-                    CachedAt = DateTimeOffset.Now,
-                });
-                return proxy;
+                return Add(key, token => new CacheValue<TValue>(ValueBuilder.GetValue(keyed, token), DateTimeOffset.Now));
             }
         }
     }
@@ -481,16 +475,16 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
     {
         if (keyed is null) { throw new ArgumentNullException(nameof(keyed)); }
 
+        var key = KeyBuilder.GetKey(keyed);
         using (lockSlim.Scope(LockStatus.UpgradeableRead))
         {
-            var key = KeyBuilder.GetKey(keyed);
             if (cacheProxies.TryGetValue(key, out var cacheProxy))
             {
-                cacheProxy!.Transfer(() =>
+                cacheProxy!.Transfer(func, static (proxy, value) =>
                 {
-                    cacheProxy.GetValueCallBack = token => new CacheValue<TValue>()
+                    proxy.GetValueCallBack = token => new CacheValue<TValue>()
                     {
-                        Value = func(token),
+                        Value = value(token),
                         CachedAt = DateTimeOffset.Now,
                     };
                 });
@@ -563,7 +557,7 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
         using (lockSlim.Scope(LockStatus.Write))
         {
-            foreach (var key in keys)
+            foreach (var key in keys.ToArray())
             {
                 cacheProxies.Remove(key);
             }
@@ -576,13 +570,17 @@ internal class InternalCacheStore<TKeyed, TKey, TValue> : ICacheStore<TKeyed, TK
 
     public void TrimExcess()
     {
-        using (lockSlim.Scope(LockStatus.Write))
+        using (lockSlim.Scope(LockStatus.UpgradeableRead))
         {
             var items = cacheProxies.Where(x => x.Status is CacheStatus.Real && !x.TimedOut).ToArray();
-            cacheProxies.Clear();
-            foreach (var item in items)
+
+            using (lockSlim.Scope(LockStatus.Write))
             {
-                cacheProxies.Add(item);
+                cacheProxies.Clear();
+                foreach (var item in items)
+                {
+                    cacheProxies.Add(item);
+                }
             }
         }
     }

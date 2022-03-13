@@ -28,6 +28,34 @@ internal static partial class ThreadingExtensions
         tcs.Task.ContinueWith(t => timer.Dispose());
         return tcs;
     }
+
+    /// <summary>
+    /// デリゲートを指定した遅延時間で実行します。
+    /// </summary>
+    /// <typeparam name="TPara">パラメーターの型</typeparam>
+    /// <typeparam name="TResult">結果の型</typeparam>
+    /// <param name="func">遅延実行するデリゲート</param>
+    /// <param name="para">パラメーター</param>
+    /// <param name="timeout">遅延時間</param>
+    public static TaskCompletionSource<TResult> StartNewTimer<TPara, TResult>(this Func<TPara, TResult> func, TimeSpan timeout, TPara para)
+    {
+        TaskCompletionSource<TResult> tcs = new();
+        Timer timer = new(x =>
+        {
+            if (tcs.Task.IsCompleted) return;
+            try
+            {
+                var value = func(para);
+                tcs.TrySetResult(value);
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }, null, timeout, Timeout.InfiniteTimeSpan);
+        tcs.Task.ContinueWith(t => timer.Dispose());
+        return tcs;
+    }
 }
 #endregion
 

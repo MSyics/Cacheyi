@@ -7,29 +7,41 @@
 /// <typeparam name="TValue">保持要素の型</typeparam>
 public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
 {
-    private readonly AsyncLock lockObj = new();
+    private readonly object lockObj = new();
+    private readonly AsyncLock asyncLock = new();
+    private readonly CacheProxyCollection<TKey, AsyncCacheProxy<TKey, TValue>> cacheProxies;
 
-    internal AsyncCacheProxy() { }
+    internal AsyncCacheProxy(CacheProxyCollection<TKey, AsyncCacheProxy<TKey, TValue>> cacheProxies)
+    {
+        this.cacheProxies = cacheProxies;
+    }
 
     /// <summary>
     /// 要素を取得します。
     /// </summary>
     public async ValueTask<TValue> GetValueAsync(CancellationToken cancellationToken = default)
     {
-        using (await lockObj.LockAsync(cancellationToken))
-        {
-            if (Status is CacheStatus.Virtual)
-            {
-                CacheValue = await GetValueCallBackAsync(cancellationToken).ConfigureAwait(false);
-                Status = CacheStatus.Real;
+        CacheValue<TValue> value;
 
-                if (HasTimeout)
-                {
-                    CancellingTimeout = TimedOutCallBackAsync?.StartNewTimer(Timeout);
-                }
+        using (await asyncLock.LockAsync(cancellationToken))
+        {
+            if (Status is CacheStatus.Real)
+            {
+                return CacheValue.Value;
             }
 
-            return CacheValue.Value;
+            value = await GetValueCallBackAsync(cancellationToken).ConfigureAwait(false);
+
+            lock (lockObj)
+            {
+                Status = CacheStatus.Real;
+                CacheValue = value;
+                if (HasTimeout)
+                {
+                    CancellingTimeout = TimedOutCallBackAsync?.StartNewTimer(Timeout, this);
+                }
+                return CacheValue.Value;
+            }
         }
     }
 
@@ -58,9 +70,9 @@ public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
     /// <summary>
     /// 要素の保持状態をリセットします。
     /// </summary>
-    public async Task ResetAsync()
+    public void Reset()
     {
-        using (await lockObj.LockAsync())
+        lock (lockObj)
         {
             ResetCore();
         }
@@ -69,9 +81,9 @@ public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
     /// <summary>
     /// 要素の保持状態を保持期間を過ぎていたらリセットします。
     /// </summary>
-    public async Task ResetIfTimeoutAsync()
+    public void ResetIfTimeout()
     {
-        using (await lockObj.LockAsync())
+        lock (lockObj)
         {
             if (TimedOut)
             {
@@ -80,12 +92,12 @@ public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
         }
     }
 
-    internal async Task TransferAsync(Action action)
+    internal void Transfer(Func<CancellationToken, Task<TValue>> func, Action<AsyncCacheProxy<TKey, TValue>, Func<CancellationToken, Task<TValue>>> action)
     {
-        using (await lockObj.LockAsync())
+        lock (lockObj)
         {
             ResetCore();
-            action?.Invoke();
+            action?.Invoke(this, func);
         }
     }
 
@@ -101,8 +113,12 @@ public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
     {
         get
         {
-            if (Status != CacheStatus.Real) { return false; }
-            return HasTimeout && DateTimeOffset.Now >= CacheValue.CachedAt.Add(Timeout);
+            lock (lockObj)
+            {
+                if (Status != CacheStatus.Real) { return false; }
+                DateTimeOffset offset = CacheValue.CachedAt.Add(Timeout);
+                return HasTimeout && DateTimeOffset.Now >= offset;
+            }
         }
     }
 
@@ -129,11 +145,10 @@ public sealed class AsyncCacheProxy<TKey, TValue> : IKeyed<TKey>
     /// <summary>
     /// Store に存在するかどうかを示す値を取得します。存在する場合は true、それ以外は false を返します。
     /// </summary>
-    public bool InStock => InStockCallBack?.Invoke() ?? false;
+    public bool InStock => cacheProxies.Contains(Key);
 
     internal CacheValue<TValue> CacheValue { get; set; }
     internal Func<CancellationToken, Task<CacheValue<TValue>>> GetValueCallBackAsync { get; set; }
-    internal Func<Task<bool>> TimedOutCallBackAsync { get; set; }
-    internal TaskCompletionSource<Task<bool>> CancellingTimeout { get; set; }
-    internal Func<bool> InStockCallBack { get; set; }
+    internal Func<AsyncCacheProxy<TKey, TValue>, bool> TimedOutCallBackAsync { get; set; }
+    internal TaskCompletionSource<bool> CancellingTimeout { get; set; }
 }

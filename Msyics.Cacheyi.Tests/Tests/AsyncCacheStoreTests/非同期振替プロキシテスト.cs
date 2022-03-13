@@ -19,7 +19,7 @@ public partial class 非同期振替プロキシテスト
     [Fact]
     public async Task When_振替_Expect_取得()
     {
-        var cache = await store.TransferAsync(int.MaxValue, () => Task.FromResult(new TestValue(0, 0)));
+        var cache = store.Transfer(int.MaxValue, () => Task.FromResult(new TestValue(0, 0)));
 
         var actual = (await cache.GetValueAsync()).Value;
 
@@ -29,8 +29,8 @@ public partial class 非同期振替プロキシテスト
     [Fact]
     public async Task When_再振替_Expect_取得()
     {
-        var cache = await store.TransferAsync(0, () => Task.FromResult(new TestValue(0, int.MinValue)));
-        await store.TransferAsync(0, new TestValue(int.MaxValue, int.MaxValue));
+        var cache = store.Transfer(0, () => Task.FromResult(new TestValue(0, int.MinValue)));
+        store.Transfer(0, new TestValue(int.MaxValue, int.MaxValue));
 
         var actual = (await cache.GetValueAsync()).Value;
 
@@ -42,7 +42,7 @@ public partial class 非同期振替プロキシテスト
     {
         var cache = store.Allocate(0);
         await cache.GetValueAsync();
-        await store.TransferAsync(0, () => Task.FromResult(new TestValue(0, int.MaxValue)));
+        store.Transfer(0, () => Task.FromResult(new TestValue(0, int.MaxValue)));
 
         Assert.Equal(CacheStatus.Virtual, cache.Status);
     }
@@ -52,7 +52,7 @@ public partial class 非同期振替プロキシテスト
     {
         var cache = store.Allocate(0);
         await cache.GetValueAsync();
-        await store.TransferAsync(0, () => Task.FromResult(new TestValue(0, int.MaxValue)));
+        store.Transfer(0, () => Task.FromResult(new TestValue(0, int.MaxValue)));
 
         var actual = (await cache.GetValueAsync()).Value;
 

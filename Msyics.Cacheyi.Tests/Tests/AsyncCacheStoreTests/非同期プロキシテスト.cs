@@ -125,7 +125,7 @@ public partial class 非同期プロキシテスト
         var cache = store.Allocate(0);
         await cache.GetValueAsync();
 
-        await cache.ResetAsync();
+        cache.Reset();
 
         Assert.Equal(CacheStatus.Virtual, cache.Status);
     }
@@ -139,7 +139,7 @@ public partial class 非同期プロキシテスト
         await cache.GetValueAsync();
 
         await Task.Delay(50);
-        await cache.ResetIfTimeoutAsync();
+        cache.ResetIfTimeout();
 
         Assert.Equal(CacheStatus.Virtual, cache.Status);
     }
@@ -152,7 +152,7 @@ public partial class 非同期プロキシテスト
         var cache = store.Allocate(0);
         await cache.GetValueAsync();
 
-        await cache.ResetIfTimeoutAsync();
+        cache.ResetIfTimeout();
 
         Assert.Equal(CacheStatus.Real, cache.Status);
     }
@@ -173,7 +173,7 @@ public partial class 非同期プロキシテスト
         var cache = store.Allocate(0);
         await cache.GetValueAsync();
 
-        await store.Allocate(0).ResetAsync();
+        store.Allocate(0).Reset();
 
         Assert.Equal(CacheStatus.Virtual, cache.Status);
     }

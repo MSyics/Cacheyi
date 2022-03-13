@@ -143,7 +143,7 @@ public partial class 非同期ストアテスト
             await cache.GetValueAsync();
         }
 
-        await store.ResetAsync();
+        store.Reset();
 
         foreach (var cache in store.AsEnumerable())
         {
@@ -154,7 +154,7 @@ public partial class 非同期ストアテスト
     [Fact]
     public void When_振替_Expect_保持数()
     {
-        store.TransferAsync(0, new TestValue(0, int.MaxValue));
+        store.Transfer(0, new TestValue(0, int.MaxValue));
 
         Assert.Equal(1, store.Count);
     }

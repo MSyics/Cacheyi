@@ -178,7 +178,7 @@ public partial class ストアテスト
         store.TimeoutBehaivor = CacheTimeoutBehaivor.Reset;
         store.Allocate(0).GetValue();
 
-        await Task.Delay(50);
+        await Task.Delay(100);
 
         Assert.Equal(CacheStatus.Virtual, store.AsEnumerable().First().Status);
     }
